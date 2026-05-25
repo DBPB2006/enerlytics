@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&family=Barlow+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Archivo+Narrow:wght@400;700&family=Inter:wght@400;700&display=swap');
+
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #E1EBED; /* Main background */
+    --text-primary: #000000;
+    --accent-neon: #dfed2b;
+    
+    --eco-solar: #FFF066;
+    --eco-wind: #A2E3E3;
+    --eco-hydro: #9FD3FF;
+    --eco-geo: #FFA47A;
+    --eco-biomass: #C3EAA6;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+@layer utilities {
+  .eco-nexus-glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .outline-text {
+    -webkit-text-stroke: 1.5px black;
+    color: transparent;
+  }
+
+  .eco-nexus-bg-fixed-layer {
+    background-image: url('/flip.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+
+  /* Cinematic Animations */
+  @keyframes border-flow {
+    0% { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(200%) skewX(-15deg); }
+  }
+
+  .animate-border-flow {
+    animation: border-flow 3s ease-in-out infinite;
+  }
+
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-up {
+    animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Grayscale-to-Color Transitions */
+  .hover-grayscale-reveal {
+    filter: grayscale(100%) opacity(60%);
+    transition: filter 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .group:hover .hover-grayscale-reveal,
+  .hover-grayscale-reveal:hover {
+    filter: grayscale(0%) opacity(100%) !important;
+  }
+
+  /* Neon Shadows Mapped to Energy Themes */
+  .hover-glow-solar:hover {
+    box-shadow: 0 0 25px rgba(223, 237, 43, 0.25), 0 0 50px rgba(223, 237, 43, 0.12);
+    border-color: rgba(223, 237, 43, 0.4) !important;
+  }
+  .hover-glow-wind:hover {
+    box-shadow: 0 0 25px rgba(162, 227, 227, 0.25), 0 0 50px rgba(162, 227, 227, 0.12);
+    border-color: rgba(162, 227, 227, 0.4) !important;
+  }
+  .hover-glow-hydro:hover {
+    box-shadow: 0 0 25px rgba(159, 211, 255, 0.25), 0 0 50px rgba(159, 211, 255, 0.12);
+    border-color: rgba(159, 211, 255, 0.4) !important;
+  }
+  .hover-glow-biomass:hover {
+    box-shadow: 0 0 25px rgba(195, 234, 166, 0.25), 0 0 50px rgba(195, 234, 166, 0.12);
+    border-color: rgba(195, 234, 166, 0.4) !important;
+  }
+  .hover-glow-geothermal:hover {
+    box-shadow: 0 0 25px rgba(255, 164, 122, 0.25), 0 0 50px rgba(255, 164, 122, 0.12);
+    border-color: rgba(255, 164, 122, 0.4) !important;
+  }
+  .hover-glow-neon:hover {
+    box-shadow: 0 0 20px rgba(223, 237, 43, 0.4);
+    border-color: #dfed2b !important;
+  }
+
+  /* Vector Icon Micro-Rotations on Container Group Hover */
+  .hover-rotate-icon svg,
+  .hover-rotate-icon .lucide {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .group:hover .hover-rotate-icon svg,
+  .group:hover .hover-rotate-icon .lucide {
+    transform: rotate(90deg) scale(1.1);
+  }
+
+  /* Vector Icon Continuous Slow Spinning on Group Hover */
+  .hover-spin-icon svg,
+  .hover-spin-icon .lucide {
+    transition: transform 12s linear;
+  }
+  .group:hover .hover-spin-icon svg,
+  .group:hover .hover-spin-icon .lucide {
+    transform: rotate(360deg);
+  }
+
+  /* Chevrons Sliding Interaction on Group Hover */
+  .hover-slide-chevron svg,
+  .hover-slide-chevron .lucide {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .group:hover .hover-slide-chevron svg,
+  .group:hover .hover-slide-chevron .lucide {
+    transform: translateX(6px);
+  }
+}
+
+.eco-nexus-scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 100;
+  background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0) 100%);
+  opacity: 0.1;
+  position: fixed;
+  pointer-events: none;
+  animation: scan 12s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: -100px; }
+  100% { top: 100%; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: 1px solid rgba(0,0,0,0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-neon);
+}
+
+/* Key out the fake checkerboard background on light backgrounds */
+.brand-logo-light {
+  filter: contrast(300%) brightness(115%);
+  mix-blend-mode: multiply;
+}
+
+/* Key out the fake checkerboard background on dark backgrounds, making the logo white */
+.brand-logo-dark {
+  filter: invert(1) contrast(300%) brightness(150%);
+  mix-blend-mode: screen;
+}
+
+/* Custom Asymmetric Leaf Silhouettes for Clean Energy Vibe */
+.leaf-shape-sm {
+  border-radius: 12px 2px 12px 2px !important;
+}
+
+.leaf-shape-md {
+  border-radius: 24px 4px 24px 4px !important;
+}
+
+.leaf-shape-lg {
+  border-radius: 36px 6px 36px 6px !important;
+}
+
+.leaf-shape-xl {
+  border-radius: 56px 8px 56px 8px !important;
+}
