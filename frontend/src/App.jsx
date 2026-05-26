@@ -85,6 +85,23 @@ function AppLayout() {
     const isMapPage = location.pathname === '/resources';
     const [showSplash, setShowSplash] = useState(true);
 
+    const navbarPaths = ['/', '/resources', '/categories', '/analytics', '/groups', '/resources/create', '/profile'];
+    const isNavbarPage = (path) => navbarPaths.includes(path);
+
+    const prevPathRef = useRef(location.pathname);
+    const [animationKey, setAnimationKey] = useState(location.pathname);
+
+    useEffect(() => {
+        const prevPath = prevPathRef.current;
+        const currentPath = location.pathname;
+
+        // Trigger transition animation only when navigating between primary navbar pages
+        if (isNavbarPage(prevPath) && isNavbarPage(currentPath)) {
+            setAnimationKey(currentPath);
+        }
+        prevPathRef.current = currentPath;
+    }, [location.pathname]);
+
     return (
         <div className="eco-nexus-bg-fixed-layer relative flex min-h-screen flex-col selection:bg-[#d4e157] selection:text-black">
             <AnimatePresence>
@@ -108,7 +125,7 @@ function AppLayout() {
                 <AnimatePresence mode="wait">
                     <Routes
                         location={location}
-                        key={location.pathname}
+                        key={animationKey}
                     >
                         {/* Public Entry Points */}
                         <Route
@@ -163,7 +180,9 @@ function AppLayout() {
                             path="/resources/create"
                             element={
                                 <PrivateRoute>
-                                    <CreateResource />
+                                    <PageTransition>
+                                        <CreateResource />
+                                    </PageTransition>
                                 </PrivateRoute>
                             }
                         />
@@ -217,9 +236,7 @@ function AppLayout() {
                             path="/categories/:type"
                             element={
                                 <PrivateRoute>
-                                    <PageTransition>
-                                        <CategoryOverview />
-                                    </PageTransition>
+                                    <CategoryOverview />
                                 </PrivateRoute>
                             }
                         />
@@ -227,9 +244,7 @@ function AppLayout() {
                             path="/categories/:type/list"
                             element={
                                 <PrivateRoute>
-                                    <PageTransition>
-                                        <CategoryResources />
-                                    </PageTransition>
+                                    <CategoryResources />
                                 </PrivateRoute>
                             }
                         />
@@ -237,7 +252,9 @@ function AppLayout() {
                             path="/profile"
                             element={
                                 <PrivateRoute>
-                                    <Profile />
+                                    <PageTransition>
+                                        <Profile />
+                                    </PageTransition>
                                 </PrivateRoute>
                             }
                         />
