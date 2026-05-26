@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class GroupController extends Controller
 {
     /**
-     * Reusable role checker helper (Unit VI: Eloquent pivot table queries)
+     * Reusable role checker helper validating pivot memberships
      */
     private function hasRole($group, $roles)
     {
@@ -20,7 +20,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Get groups the user belongs to (Unit VI: Relationships & Unit II: JSON Response)
+     * Get groups the user belongs to
      */
     public function index(Request $request)
     {
@@ -29,7 +29,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Get a single group (Unit VI: Eloquent query & approved members checking)
+     * Get details of a single group if the user is an approved member
      */
     public function show(Request $request, $id)
     {
@@ -63,7 +63,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Create a new group (Unit V: Form validation & Unit VI: Eloquent insert)
+     * Create a new cooperative group
      */
     public function store(Request $request)
     {
@@ -90,7 +90,7 @@ class GroupController extends Controller
             'owner_id' => $request->user()->id,
         ]);
 
-        // Unit VI: Attach creator as owner and approved on the pivot table
+        // Attach group creator as owner with approved status on the pivot table
         $group->users()->attach($request->user()->id, [
             'role' => 'owner',
             'status' => 'approved',
@@ -100,7 +100,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Request to join a group (Unit VI: Pivot insertions)
+     * Request to join a group, adding a pending pivot record
      */
     public function join(Request $request, $id)
     {
@@ -126,7 +126,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Leave a group (Unit VI: Detaching from relationships)
+     * Leave a group, detaching the pivot record
      */
     public function leave(Request $request, $id)
     {
@@ -160,7 +160,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Approve a user (Unit VI: Updating pivot details)
+     * Approve a user join request on the pivot table
      */
     public function approve(Request $request, $id, $userId)
     {

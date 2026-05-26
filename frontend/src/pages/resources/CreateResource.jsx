@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { motion as motionFramer, AnimatePresence } from 'framer-motion';
+import { motion as motionFramer } from 'framer-motion';
 import {
     ArrowLeft,
     Save,
@@ -124,7 +124,6 @@ export default function CreateResource() {
     const [uploadedFile, setUploadedFile] = useState(null);
     const [dragOver, setDragOver] = useState(false);
 
-    const [preview, setPreview] = useState(null);
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -134,7 +133,7 @@ export default function CreateResource() {
             try {
                 const response = await api.get('/groups');
                 setGroups(response.data);
-            } catch (err) {
+            } catch {
                 setGroups([
                     { id: 1, name: 'Karnataka Wind Cooperative' },
                     { id: 2, name: 'Bangalore Solar Assembly' },
@@ -176,7 +175,13 @@ export default function CreateResource() {
                     setTurbineModel(data.turbine_model || '');
                     setFlowRate(data.flow_rate || '');
                     setHead(data.head || '');
-                } catch (err) {
+                    if (data.blueprint_name) {
+                        setUploadedFile({
+                            name: data.blueprint_name,
+                            size: 'Stored Blueprint',
+                        });
+                    }
+                } catch {
                     setError('Failed to fetch node details for editing.');
                 }
             };
@@ -184,9 +189,9 @@ export default function CreateResource() {
         }
     }, [id, isEditMode]);
 
-    const calculateLivePreview = () => {
-        let output = 0;
-        let score = 'MEDIUM';
+    const preview = (() => {
+        let output;
+        let score;
         const cap = parseFloat(capacity) || 0;
 
         if (type === 'solar') {
@@ -214,30 +219,14 @@ export default function CreateResource() {
         }
 
         if (output > 0) {
-            setPreview({
+            return {
                 estimated_output: output,
                 efficiency_score: score,
                 accuracy: 'PREVIEW_ESTIMATE',
-            });
-        } else {
-            setPreview(null);
+            };
         }
-    };
-
-    useEffect(() => {
-        calculateLivePreview();
-    }, [
-        type,
-        capacity,
-        irradiance,
-        windSpeed,
-        riverFlow,
-        panelArea,
-        cellEfficiency,
-        rotorSweptArea,
-        flowRate,
-        head,
-    ]);
+        return null;
+    })();
 
     const handleAddTag = (e) => {
         e.preventDefault();
@@ -251,6 +240,20 @@ export default function CreateResource() {
         setTags(tags.filter((t) => t !== tagToRemove));
     };
 
+    const fileInputRef = useRef(null);
+
+    const handleFileSelect = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setUploadedFile({
+                name: file.name,
+                size: file.size > 1024 * 1024
+                    ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+                    : (file.size / 1024).toFixed(1) + ' KB',
+            });
+        }
+    };
+
     const handleFileDrop = (e) => {
         e.preventDefault();
         setDragOver(false);
@@ -258,7 +261,9 @@ export default function CreateResource() {
             const file = e.dataTransfer.files[0];
             setUploadedFile({
                 name: file.name,
-                size: (file.size / 1024).toFixed(1) + ' KB',
+                size: file.size > 1024 * 1024
+                    ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+                    : (file.size / 1024).toFixed(1) + ' KB',
             });
         }
     };
@@ -426,6 +431,7 @@ export default function CreateResource() {
                 type === 'wind' && windSpeed ? parseFloat(windSpeed) : null,
             river_flow:
                 type === 'hydro' && riverFlow ? parseFloat(riverFlow) : null,
+            blueprint_name: uploadedFile ? uploadedFile.name : null,
         };
 
         try {
@@ -482,15 +488,15 @@ export default function CreateResource() {
                     'Location not found. Please try a different query or select manually on the map.',
                 );
             }
-        } catch (err) {
-            console.error(err);
+        } catch {
+            // Silently handle geocoding error for clean production
         } finally {
             setSearching(false);
         }
     };
 
     const categories = [
-        { id: 'solar', label: 'Solar PV', icon: Sun, color: '#dfed2b' },
+        { id: 'solar', label: 'Solar PV', icon: Sun, color: '#d4e157' },
         { id: 'wind', label: 'Wind Onshore', icon: Wind, color: '#A2E3E3' },
         {
             id: 'hydro',
@@ -556,9 +562,9 @@ export default function CreateResource() {
                             <span
                                 className={`flex h-8 w-8 items-center justify-center text-xs ${
                                     step === s
-                                        ? 'bg-black text-[#dfed2b]'
+                                        ? 'bg-black text-[#d4e157]'
                                         : step > s
-                                          ? 'bg-[#dfed2b] text-black'
+                                          ? 'bg-[#d4e157] text-black'
                                           : 'bg-white/40 text-black/40'
                                 }`}
                             >
@@ -604,7 +610,7 @@ export default function CreateResource() {
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 {error && (
-                                    <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                                    <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                         <AlertCircle className="h-4 w-4 shrink-0" />
                                         <span>{error}</span>
                                     </div>
@@ -632,7 +638,7 @@ export default function CreateResource() {
                                                             }}
                                                             className={`flex cursor-pointer flex-col items-center gap-3 border p-4 text-center transition-colors ${
                                                                 isSelected
-                                                                    ? 'border-black bg-black text-[#dfed2b]'
+                                                                    ? 'border-black bg-black text-[#d4e157]'
                                                                     : 'border-black/10 bg-white/40 text-black hover:bg-white/60'
                                                             }`}
                                                         >
@@ -646,7 +652,7 @@ export default function CreateResource() {
                                                                 }}
                                                             >
                                                                 <CatIcon
-                                                                    className={`h-5 w-5 ${isSelected ? 'text-[#dfed2b]' : 'text-black'}`}
+                                                                    className={`h-5 w-5 ${isSelected ? 'text-[#d4e157]' : 'text-black'}`}
                                                                 />
                                                             </div>
                                                             <span className="text-[9px] uppercase tracking-widest">
@@ -783,7 +789,7 @@ export default function CreateResource() {
                                             <button
                                                 type="button"
                                                 onClick={handleContinueToStep2}
-                                                className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                             >
                                                 CONTINUE TO STEP 2
                                             </button>
@@ -1025,7 +1031,7 @@ export default function CreateResource() {
                                             <button
                                                 type="button"
                                                 onClick={handleContinueToStep3}
-                                                className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                             >
                                                 CONTINUE TO STEP 3
                                             </button>
@@ -1044,7 +1050,7 @@ export default function CreateResource() {
                                                 {tags.map((tag) => (
                                                     <span
                                                         key={tag}
-                                                        className="flex items-center gap-2 bg-black px-3 py-1 text-[10px] uppercase tracking-widest text-[#dfed2b]"
+                                                        className="flex items-center gap-2 bg-black px-3 py-1 text-[10px] uppercase tracking-widest text-[#d4e157]"
                                                     >
                                                         {tag}
                                                         <button
@@ -1071,7 +1077,7 @@ export default function CreateResource() {
                                                 <button
                                                     type="button"
                                                     onClick={handleAddTag}
-                                                    className="bg-black px-6 py-3 uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                    className="bg-black px-6 py-3 uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                                 >
                                                     ADD TAG
                                                 </button>
@@ -1118,6 +1124,13 @@ export default function CreateResource() {
                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
                                                 Upload Resource Blueprints / Schematic Photos
                                             </label>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleFileSelect}
+                                                style={{ display: 'none' }}
+                                                accept=".png,.pdf,.svg,.jpg,.jpeg"
+                                            />
                                             <div
                                                 onDragOver={(e) => {
                                                     e.preventDefault();
@@ -1125,16 +1138,10 @@ export default function CreateResource() {
                                                 }}
                                                 onDragLeave={() => setDragOver(false)}
                                                 onDrop={handleFileDrop}
-                                                onClick={() => {
-                                                    const mockName = `${type}_blueprint_schematic.png`;
-                                                    setUploadedFile({
-                                                        name: mockName,
-                                                        size: '1.4 MB',
-                                                    });
-                                                }}
+                                                onClick={() => fileInputRef.current?.click()}
                                                 className={`flex cursor-pointer flex-col items-center justify-center gap-4 border border-dashed p-8 text-center transition-colors ${
                                                     dragOver
-                                                        ? 'border-black bg-[#dfed2b]/20'
+                                                        ? 'border-black bg-[#d4e157]/20'
                                                         : 'border-black/20 bg-white/20 hover:border-black/50'
                                                 }`}
                                             >
@@ -1157,7 +1164,7 @@ export default function CreateResource() {
                                                         opacity: 1,
                                                         y: 0,
                                                     }}
-                                                    className="flex items-center justify-between bg-black p-4 text-[#dfed2b]"
+                                                    className="flex items-center justify-between bg-black p-4 text-[#d4e157]"
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <Check className="h-4 w-4" />
@@ -1202,7 +1209,7 @@ export default function CreateResource() {
                                             <button
                                                 type="submit"
                                                 disabled={submitLoading}
-                                                className="flex items-center justify-center gap-2 bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
+                                                className="flex items-center justify-center gap-2 bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black disabled:opacity-50"
                                             >
                                                 <Save className="h-4 w-4" />
                                                 {submitLoading
@@ -1222,8 +1229,8 @@ export default function CreateResource() {
 
                     {/* Interactive Map & Yield Preview Sidebar */}
                     <div className="space-y-8 lg:col-span-4">
-                        <div className="eco-nexus-glass-card relative overflow-hidden border border-black/10 bg-[#dfed2b]/10 p-6 shadow-xl md:p-8">
-                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                        <div className="eco-nexus-glass-card relative overflow-hidden border border-black/10 bg-[#d4e157]/10 p-6 shadow-xl md:p-8">
+                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                                 LOCATION SELECTOR
                             </div>
                             <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
@@ -1253,10 +1260,10 @@ export default function CreateResource() {
                                 <button
                                     type="submit"
                                     disabled={searching}
-                                    className="flex items-center justify-center bg-black px-4 py-2 font-['Montserrat'] text-xs font-bold uppercase tracking-widest text-[#dfed2b] transition-colors hover:bg-black/80"
+                                    className="flex items-center justify-center bg-black px-4 py-2 font-['Montserrat'] text-xs font-bold uppercase tracking-widest text-[#d4e157] transition-colors hover:bg-black/80"
                                 >
                                     {searching ? (
-                                        <Loader2 className="h-4 w-4 animate-spin text-[#dfed2b]" />
+                                        <Loader2 className="h-4 w-4 animate-spin text-[#d4e157]" />
                                     ) : (
                                         <SearchIcon className="h-4 w-4" />
                                     )}
@@ -1302,7 +1309,7 @@ export default function CreateResource() {
                                                     parseFloat(longitude),
                                                 ]}
                                                 icon={L.divIcon({
-                                                    html: `<div class="w-8 h-8 rounded-full bg-black border-2 border-[#dfed2b] flex items-center justify-center shadow-lg"><div class="w-2.5 h-2.5 rounded-full bg-[#dfed2b] animate-ping"></div></div>`,
+                                                    html: `<div class="w-8 h-8 rounded-full bg-black border-2 border-[#d4e157] flex items-center justify-center shadow-lg"><div class="w-2.5 h-2.5 rounded-full bg-[#d4e157] animate-ping"></div></div>`,
                                                     className:
                                                         'custom-leaflet-creation-marker',
                                                     iconSize: [32, 32],
@@ -1337,7 +1344,7 @@ export default function CreateResource() {
                                             <span className="tracking-widest text-black/60">
                                                 EFFICIENCY INDEX:
                                             </span>
-                                            <span className="bg-black px-2 py-0.5 font-black text-[#dfed2b]">
+                                            <span className="bg-black px-2 py-0.5 font-black text-[#d4e157]">
                                                 {preview.efficiency_score}
                                             </span>
                                         </div>

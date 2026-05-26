@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     BrowserRouter as Router,
     Routes,
@@ -42,20 +42,27 @@ function PrivateRoute({ children }) {
 function SplashAnimation({ onComplete }) {
     const videoRef = useRef(null);
 
-    useEffect(() => {
+    const handleLoadedMetadata = () => {
         if (videoRef.current) {
-            videoRef.current.playbackRate = 4.0; // Play 4x faster (completes in ~1.6s)
+            const duration = videoRef.current.duration;
+            if (duration && duration > 0) {
+                // Play smoothly to fit exactly inside 2.0 seconds
+                videoRef.current.playbackRate = duration / 1.5;
+            }
         }
+    };
+
+    useEffect(() => {
         const timer = setTimeout(() => {
             onComplete();
-        }, 1650);
+        }, 2000);
         return () => clearTimeout(timer);
     }, [onComplete]);
 
     return (
         <motion.div
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 2.0 } }}
+            exit={{ opacity: 0, transition: { duration: 0.5 } }}
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
         >
             <video
@@ -63,6 +70,7 @@ function SplashAnimation({ onComplete }) {
                 autoPlay
                 muted
                 playsInline
+                onLoadedMetadata={handleLoadedMetadata}
                 onEnded={onComplete}
                 className="absolute inset-0 h-full w-full object-cover opacity-80"
             >
@@ -78,7 +86,7 @@ function AppLayout() {
     const [showSplash, setShowSplash] = useState(true);
 
     return (
-        <div className="eco-nexus-bg-fixed-layer relative flex min-h-screen flex-col selection:bg-[#dfed2b] selection:text-black">
+        <div className="eco-nexus-bg-fixed-layer relative flex min-h-screen flex-col selection:bg-[#d4e157] selection:text-black">
             <AnimatePresence>
                 {showSplash && (
                     <SplashAnimation

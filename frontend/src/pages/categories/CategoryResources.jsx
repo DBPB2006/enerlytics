@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -119,8 +119,6 @@ const itemVariants = {
 export default function CategoryResources() {
     const { type } = useParams();
     const [resources, setResources] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [activeTab, setActiveTab] = useState('nodes');
@@ -128,18 +126,63 @@ export default function CategoryResources() {
     useEffect(() => {
         const fetchCategoryResources = async () => {
             try {
-                setError('');
                 const response = await api.get(`/resources?type=${type}`);
                 setResources(response.data);
-            } catch (err) {
+            } catch {
                 setResources([]);
-                setError('Failed to fetch node stations from the database.');
-            } finally {
-                setLoading(false);
             }
         };
         fetchCategoryResources();
     }, [type]);
+
+    const handleDownloadAsset = (doc) => {
+        const fileContent = `========================================================================
+SYSTEM SYSTEM NODE PLAYBOOK: ${doc.title.toUpperCase()}
+========================================================================
+Document Category: ${type?.toUpperCase()} ENERGY GRID
+Document Type:     ${doc.type.toUpperCase()}
+Resource Size:     ${doc.size}
+Release Version:   V2.2026-PRODUCTION
+
+------------------------------------------------------------------------
+1. OVERVIEW & INSTRUCTIONS
+------------------------------------------------------------------------
+This official playbook guide has been fetched directly from the Eco-Nexus
+Energy Registry. Operators must read, understand, and strictly execute
+the procedures outlined herein prior to updating or deploying community
+assets in the grid system.
+
+Description:
+${doc.desc}
+
+------------------------------------------------------------------------
+2. TECHNICAL PROTOCOLS & IMPLEMENTATION
+------------------------------------------------------------------------
+[STEP 01] Check all geographical coordinates against regional maps.
+[STEP 02] Verify multi-factor authentication is active on operator nodes.
+[STEP 03] Calibrate capacity bounds to prevent load surges or heat core leaks.
+[STEP 04] Verify the validation ID (unique ID) is active before grid write operations.
+
+------------------------------------------------------------------------
+3. COMPLIANCE & SAFETY ASSURANCE
+------------------------------------------------------------------------
+All data feeds and power mappings must comply with the regional safety
+codes and cooperative standards. Failure to follow tilt/yaw/pressure
+guidance voids validation ID privileges.
+
+||||| END OF SYSTEM DOCUMENT: ${doc.title.toUpperCase()} |||||
+`;
+
+        const blob = new Blob([fileContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${doc.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_spec.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     const getCategoryMeta = () => {
         const energyType = type?.toLowerCase();
@@ -148,7 +191,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Solar Generation',
                     icon: Sun,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-[#FFF9C4]',
                     desc: 'Direct conversion solar energy harvesting units. These arrays capture direct electromagnetic radiation from coordinates mapping close to the equator. Load yields are calculated relative to panel coverage efficiency factors.',
                 };
@@ -156,7 +199,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Wind Turbines',
                     icon: Wind,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-[#E0F7F7]',
                     desc: 'Kinetic wind capture turbines operated by community cooperatives. Outputs correlate with rotor swept dimensions and weather speed vectors. High variations are recorded due to altitude wind velocities.',
                 };
@@ -164,7 +207,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Hydroelectric Plants',
                     icon: Droplet,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-[#E1F0FF]',
                     desc: 'Run-of-the-river flow assemblies utilizing gravitational velocity head drops. Yield is calculated by water density weight multiplied by cubic flow rate and gravity acceleration coefficients.',
                 };
@@ -172,7 +215,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Biomass Gasifiers',
                     icon: Flame,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-[#F1FAD8]',
                     desc: 'Synthetic gasification structures utilizing regional organic byproducts. These assets convert material loads into robust, closed-loop cooperative loads.',
                 };
@@ -180,7 +223,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Geothermal Heat Core',
                     icon: Globe,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-[#FFEBE1]',
                     desc: 'subterranean heat baseload nodes extracting steady pressure profiles from volcanic heat grids.',
                 };
@@ -188,7 +231,7 @@ export default function CategoryResources() {
                 return {
                     title: 'Energy Resources',
                     icon: Cpu,
-                    color: '#dfed2b',
+                    color: '#d4e157',
                     bgClass: 'bg-white',
                     desc: 'Federated renewable resource node profiles.',
                 };
@@ -246,7 +289,7 @@ export default function CategoryResources() {
                             <div className="mb-6 flex items-center gap-4">
                                 <motion.div
                                     whileHover={{ scale: 1.05 }}
-                                    className="bg-black p-3 text-[#dfed2b] shadow-xl"
+                                    className="bg-black p-3 text-[#d4e157] shadow-xl"
                                 >
                                     <Icon className="h-8 w-8" />
                                 </motion.div>
@@ -293,7 +336,7 @@ export default function CategoryResources() {
                             onClick={() => setActiveTab(tab)}
                             className={`relative border border-black/10 px-6 py-3 uppercase tracking-widest transition-colors ${
                                 activeTab === tab
-                                    ? 'bg-black text-[#dfed2b]'
+                                    ? 'bg-black text-[#d4e157]'
                                     : 'bg-white/40 text-black/60 hover:bg-white/80 hover:text-black'
                             }`}
                         >
@@ -302,7 +345,7 @@ export default function CategoryResources() {
                             {activeTab === tab && (
                                 <motion.div
                                     layoutId="tab-underline"
-                                    className="absolute bottom-0 left-0 right-0 h-1 bg-[#dfed2b]"
+                                    className="absolute bottom-0 left-0 right-0 h-1 bg-[#d4e157]"
                                     transition={{
                                         type: 'spring',
                                         stiffness: 300,
@@ -357,7 +400,7 @@ export default function CategoryResources() {
                                             }
                                             className={`whitespace-nowrap border border-black/10 px-6 py-3 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest transition-all ${
                                                 statusFilter === status
-                                                    ? 'bg-black text-[#dfed2b] shadow-lg'
+                                                    ? 'bg-black text-[#d4e157] shadow-lg'
                                                     : 'bg-white/40 text-black hover:bg-white/80'
                                             }`}
                                         >
@@ -378,7 +421,7 @@ export default function CategoryResources() {
                                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                                     {filteredResources.map((res) => {
                                         const accentColors = {
-                                            solar: '#dfed2b',
+                                            solar: '#d4e157',
                                             wind: '#A2E3E3',
                                             hydro: '#9FD3FF',
                                             biomass: '#C3EAA6',
@@ -386,7 +429,7 @@ export default function CategoryResources() {
                                         };
                                         const trueColor =
                                             accentColors[type?.toLowerCase()] ||
-                                            '#dfed2b';
+                                            '#d4e157';
                                         const glowClass = `hover-glow-${type?.toLowerCase()}`;
                                         return (
                                             <motion.div
@@ -456,7 +499,7 @@ export default function CategoryResources() {
                                                     <div className="pointer-events-auto relative z-20 mt-8">
                                                         <Link
                                                             to={`/resources/${res.id}`}
-                                                            className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white shadow-xl transition-colors hover:bg-[#dfed2b] hover:text-black group-hover:bg-black group-hover:text-[#dfed2b]"
+                                                            className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white shadow-xl transition-colors hover:bg-[#d4e157] hover:text-black group-hover:bg-black group-hover:text-[#d4e157]"
                                                         >
                                                             VIEW DETAILS{' '}
                                                             <ArrowLeft className="h-4 w-4 rotate-180 transition-all duration-300" />
@@ -489,7 +532,7 @@ export default function CategoryResources() {
                             ) : (
                                 docsList.map((doc, idx) => {
                                     const accentColors = {
-                                        solar: '#dfed2b',
+                                        solar: '#d4e157',
                                         wind: '#A2E3E3',
                                         hydro: '#9FD3FF',
                                         biomass: '#C3EAA6',
@@ -497,7 +540,7 @@ export default function CategoryResources() {
                                     };
                                     const trueColor =
                                         accentColors[type?.toLowerCase()] ||
-                                        '#dfed2b';
+                                        '#d4e157';
                                     const glowClass = `hover-glow-${type?.toLowerCase()}`;
                                     return (
                                         <motion.div
@@ -516,7 +559,7 @@ export default function CategoryResources() {
                                             <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between">
                                                 <div>
                                                     <div className="mb-6 flex items-center justify-between">
-                                                        <span className="border border-black/10 bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black shadow-sm transition-all group-hover:bg-black group-hover:text-[#dfed2b]">
+                                                        <span className="border border-black/10 bg-[#d4e157] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black shadow-sm transition-all group-hover:bg-black group-hover:text-[#d4e157]">
                                                             {doc.type}
                                                         </span>
                                                         <span className="font-['Montserrat'] text-[10px] font-bold tracking-widest text-black/40 transition-colors group-hover:text-black">
@@ -542,11 +585,9 @@ export default function CategoryResources() {
                                                             scale: 0.98,
                                                         }}
                                                         onClick={() =>
-                                                            alert(
-                                                                `Initiating secure local download of playbooks: "${doc.title}"`,
-                                                            )
+                                                            handleDownloadAsset(doc)
                                                         }
-                                                        className="group flex w-full items-center justify-center gap-2 border border-black/10 bg-white/80 py-4 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-black shadow-lg transition-colors hover:bg-black hover:text-[#dfed2b]"
+                                                        className="group flex w-full items-center justify-center gap-2 border border-black/10 bg-white/80 py-4 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-black shadow-lg transition-colors hover:bg-black hover:text-[#d4e157]"
                                                     >
                                                         <Download className="h-4 w-4 group-hover:animate-bounce" />
                                                         DOWNLOAD ASSET

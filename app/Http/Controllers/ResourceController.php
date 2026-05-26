@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\Resource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ResourceController extends Controller
 {
+    // ==========================================
+    // 1. Access Control Helpers (Private)
+    // ==========================================
+
     /**
-     * Reusable role checker helper (Unit VI: Relationships & Pivot tables)
+     * Reusable role checker helper validating pivot memberships
      */
     private function hasRole($group, $roles)
     {
@@ -22,7 +25,89 @@ class ResourceController extends Controller
     }
 
     /**
-     * Display all accessible resources (Unit VI: Eloquent CRUD / Query builder)
+     * Check if the authenticated user has read access to the resource
+     */
+    private function hasReadAccess($resource)
+    {
+        if ($resource->group_id) {
+            return $resource->group->users()
+                ->where('user_id', auth()->id())
+                ->wherePivot('status', 'approved')
+                ->exists();
+        }
+
+        return $resource->created_by === auth()->id() || auth()->user()->role === 'energy_provider';
+    }
+
+    /**
+     * Check if the authenticated user has write/edit access to the resource
+     */
+    private function hasWriteAccess($resource)
+    {
+        if (! $resource->group_id) {
+            return $resource->created_by === auth()->id() || auth()->user()->role === 'energy_provider';
+        }
+
+        $group = $resource->group;
+        $isApprovedMember = $group->users()
+            ->where('user_id', auth()->id())
+            ->wherePivot('status', 'approved')
+            ->exists();
+
+        return $resource->created_by === auth()->id() ||
+            $this->hasRole($group, ['owner', 'admin']) ||
+            (auth()->user()->role === 'energy_provider' && $isApprovedMember);
+    }
+
+    /**
+     * Check if the authenticated user has delete access to the resource
+     */
+    private function hasDeleteAccess($resource)
+    {
+        if (auth()->user()->role === 'energy_provider') {
+            return false;
+        }
+
+        if (! $resource->group_id) {
+            return $resource->created_by === auth()->id();
+        }
+
+        return $resource->created_by === auth()->id() || $this->hasRole($resource->group, ['owner']);
+    }
+
+    /**
+     * Calculate average efficiency from a list of scores
+     */
+    private function calculateAverageEfficiency($scores)
+    {
+        if (empty($scores)) {
+            return 'N/A';
+        }
+
+        $weights = ['high' => 3, 'medium' => 2, 'low' => 1];
+        $totalWeight = 0;
+        foreach ($scores as $score) {
+            $totalWeight += $weights[$score] ?? 1;
+        }
+
+        $avg = $totalWeight / count($scores);
+
+        if ($avg >= 2.5) {
+            return 'high';
+        }
+        if ($avg >= 1.5) {
+            return 'medium';
+        }
+
+        return 'low';
+    }
+
+    // ==========================================
+    // 2. Resource CRUD Operations (Public)
+    // ==========================================
+
+    /**
+     * Display all accessible resources for the authenticated user
      */
     public function index(Request $request)
     {
@@ -41,7 +126,6 @@ class ResourceController extends Controller
                 });
         });
 
-        // Unit IV: Request retrieval
         if ($request->filled('search')) {
             $query->where('title', 'like', '%'.$request->input('search').'%');
         }
@@ -50,7 +134,7 @@ class ResourceController extends Controller
             $query->where('type', $request->input('type'));
         }
 
-        $resources = $query->with('group')->get();
+        $resources = $query->with(['group', 'creator'])->get();
 
         foreach ($resources as $resource) {
             $resource->attachEnergyData();
@@ -60,32 +144,7 @@ class ResourceController extends Controller
     }
 
     /**
-     * Fetch community resources for a specific group (Unit VI: Pivot constraints)
-     */
-    public function groupResources($id)
-    {
-        $group = Group::findOrFail($id);
-
-        $isMember = $group->users()
-            ->where('user_id', auth()->id())
-            ->wherePivot('status', 'approved')
-            ->exists();
-
-        if (! $isMember) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $resources = Resource::where('group_id', $group->id)->with('group')->get();
-
-        foreach ($resources as $resource) {
-            $resource->attachEnergyData();
-        }
-
-        return response()->json($resources);
-    }
-
-    /**
-     * Store a newly created resource (Unit V validation & Unit VI Eloquent insert)
+     * Validate and store a newly created resource in the grid
      */
     public function store(Request $request)
     {
@@ -101,6 +160,7 @@ class ResourceController extends Controller
             'status' => 'required|in:active,inactive,maintenance',
             'accuracy' => 'required|in:approximate,verified',
             'group_id' => 'nullable|exists:groups,id',
+            'blueprint_name' => 'nullable|string',
 
             // Resource-specific validation
             'efficiency' => 'required|numeric|min:0|max:1',
@@ -126,10 +186,21 @@ class ResourceController extends Controller
         ]);
 
         if (! empty($validated['group_id'])) {
-            // Community resource context
             $group = Group::findOrFail($validated['group_id']);
-            if (! $this->hasRole($group, ['owner'])) {
-                return response()->json(['error' => 'Forbidden: Only group owners can create resources under this group'], 403);
+            
+            $isApprovedMember = $group->users()
+                ->where('user_id', auth()->id())
+                ->wherePivot('status', 'approved')
+                ->exists();
+
+            if (auth()->user()->role === 'energy_provider') {
+                if (! $isApprovedMember) {
+                    return response()->json(['error' => 'Forbidden: You must be an approved member of this group to register resources under it'], 403);
+                }
+            } else {
+                if (! $this->hasRole($group, ['owner'])) {
+                    return response()->json(['error' => 'Forbidden: Only group owners or Energy Providers can create resources under this group'], 403);
+                }
             }
         }
 
@@ -146,27 +217,14 @@ class ResourceController extends Controller
     }
 
     /**
-     * Display the specified resource details (Unit VI Eloquent query)
+     * Display the specified resource details
      */
     public function show($id)
     {
-        $resource = Resource::with('group')->findOrFail($id);
+        $resource = Resource::with(['group', 'creator'])->findOrFail($id);
 
-        if ($resource->group_id) {
-            // Community resource
-            $isMember = $resource->group->users()
-                ->where('user_id', auth()->id())
-                ->wherePivot('status', 'approved')
-                ->exists();
-
-            if (! $isMember) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
-        } else {
-            // Individual resource
-            if ($resource->created_by !== auth()->id()) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
+        if (! $this->hasReadAccess($resource)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $resource->attachEnergyData();
@@ -175,33 +233,26 @@ class ResourceController extends Controller
     }
 
     /**
-     * Update the specified resource (Unit V validation & Unit VI Eloquent update)
+     * Validate and update the specified resource details
      */
     public function update(Request $request, $id)
     {
         $resource = Resource::findOrFail($id);
 
-        if (! $resource->group_id) {
-            // Individual
-            if ($resource->created_by !== auth()->id()) {
-                return response()->json(['error' => 'Forbidden: Access denied to individual resource'], 403);
-            }
-        } else {
-            // Community
-            $group = $resource->group;
-            if (
-                auth()->id() !== $resource->created_by &&
-                ! $this->hasRole($group, ['owner'])
-            ) {
-                return response()->json(['error' => 'Forbidden: Insufficient permissions for community resource'], 403);
-            }
+        if (! $this->hasWriteAccess($resource)) {
+            return response()->json(['error' => 'Forbidden: Insufficient permissions for community resource'], 403);
         }
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
+            'blueprint_name' => 'nullable|string|max:255',
             'status' => 'sometimes|required|in:active,inactive,maintenance',
             'capacity' => 'sometimes|required|numeric|min:0',
+            'latitude' => ['sometimes', 'required', new \App\Rules\ValidCoordinate('latitude')],
+            'longitude' => ['sometimes', 'required', new \App\Rules\ValidCoordinate('longitude')],
+            'location_name' => 'sometimes|required|string',
+            'region' => 'sometimes|required|string',
             'panel_area' => 'nullable|numeric|min:0',
             'rotor_area' => 'nullable|numeric|min:0',
             'flow_rate' => 'nullable|numeric|min:0',
@@ -214,6 +265,8 @@ class ResourceController extends Controller
             'capacity.min' => 'Capacity cannot be negative.',
             'efficiency.min' => 'Efficiency must be at least 0.',
             'efficiency.max' => 'Efficiency cannot exceed 1.0 (100%).',
+            'latitude.required' => 'Latitude coordinates are required.',
+            'longitude.required' => 'Longitude coordinates are required.',
         ]);
 
         $resource->update($validated);
@@ -223,31 +276,52 @@ class ResourceController extends Controller
     }
 
     /**
-     * Remove the specified resource (Unit VI Eloquent delete)
+     * Delete the specified resource from the database
      */
     public function destroy($id)
     {
+        if (auth()->user()->role === 'energy_provider') {
+            return response()->json(['error' => 'Forbidden: Energy Providers are restricted from deleting resources.'], 403);
+        }
+
         $resource = Resource::findOrFail($id);
 
-        if (! $resource->group_id) {
-            // Individual
-            if ($resource->created_by !== auth()->id()) {
-                return response()->json(['error' => 'Forbidden'], 403);
-            }
-        } else {
-            // Community
-            $group = $resource->group;
-            if (
-                auth()->id() !== $resource->created_by &&
-                ! $this->hasRole($group, ['owner'])
-            ) {
-                return response()->json(['error' => 'Forbidden'], 403);
-            }
+        if (! $this->hasDeleteAccess($resource)) {
+            return response()->json(['error' => 'Forbidden'], 403);
         }
 
         $resource->delete();
 
         return response()->json(['message' => 'Resource deleted successfully']);
+    }
+
+    // ==========================================
+    // 3. Telemetry & Analytics Services (Public)
+    // ==========================================
+
+    /**
+     * Fetch community resources for a specific group
+     */
+    public function groupResources($id)
+    {
+        $group = Group::findOrFail($id);
+
+        $isMember = $group->users()
+            ->where('user_id', auth()->id())
+            ->wherePivot('status', 'approved')
+            ->exists();
+
+        if (! $isMember) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $resources = Resource::where('group_id', $group->id)->with(['group', 'creator'])->get();
+
+        foreach ($resources as $resource) {
+            $resource->attachEnergyData();
+        }
+
+        return response()->json($resources);
     }
 
     /**
@@ -297,50 +371,15 @@ class ResourceController extends Controller
         return response()->json($summary);
     }
 
-    private function calculateAverageEfficiency($scores)
-    {
-        if (empty($scores)) {
-            return 'N/A';
-        }
-
-        $weights = ['high' => 3, 'medium' => 2, 'low' => 1];
-        $totalWeight = 0;
-        foreach ($scores as $score) {
-            $totalWeight += $weights[$score] ?? 1;
-        }
-
-        $avg = $totalWeight / count($scores);
-
-        if ($avg >= 2.5) {
-            return 'high';
-        }
-        if ($avg >= 1.5) {
-            return 'medium';
-        }
-
-        return 'low';
-    }
-
     /**
-     * Retrieve historic metrics/simulate if empty (Unit VI database seeding / Eloquent query)
+     * Retrieve historic telemetry metrics, generating simulated values if none exist
      */
     public function metrics($id)
     {
         $resource = Resource::findOrFail($id);
 
-        if ($resource->group_id) {
-            $isMember = $resource->group->users()
-                ->where('user_id', auth()->id())
-                ->wherePivot('status', 'approved')
-                ->exists();
-
-            if (! $isMember) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
-        } else {
-            if ($resource->created_by !== auth()->id()) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
+        if (! $this->hasReadAccess($resource)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $metrics = $resource->metrics()
@@ -403,5 +442,4 @@ class ResourceController extends Controller
 
         return response()->json($formatted);
     }
-
 }

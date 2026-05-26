@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -19,12 +19,19 @@ export default function MfaVerify() {
     const handleVerify = async (e) => {
         e.preventDefault();
         setError('');
+
+        const cleanedCode = code.replace(/\s+/g, '');
+        if (!cleanedCode || cleanedCode.length !== 6 || isNaN(cleanedCode)) {
+            setError('Please enter a valid 6-digit verification code.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const response = await api.post('/mfa/verify', {
                 user_id: userId,
-                otp: code,
+                otp: cleanedCode,
             });
             if (response.data.token && response.data.user) {
                 dispatch(loginSuccess({ token: response.data.token, user: response.data.user }));
@@ -58,7 +65,7 @@ export default function MfaVerify() {
 
                     <form onSubmit={handleVerify} className="mt-2 space-y-6">
                         {error && (
-                            <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                            <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                 <ShieldAlert className="h-4 w-4 shrink-0" />
                                 <span>{error}</span>
                             </div>
@@ -66,7 +73,7 @@ export default function MfaVerify() {
 
                         {/* Glowing lock badge */}
                         <div className="flex justify-center py-4">
-                            <div className="flex h-20 w-20 items-center justify-center bg-black text-[#dfed2b] shadow-2xl">
+                            <div className="flex h-20 w-20 items-center justify-center bg-black text-[#d4e157] shadow-2xl">
                                 <ShieldCheck className="h-10 w-10 animate-pulse" />
                             </div>
                         </div>
@@ -96,7 +103,7 @@ export default function MfaVerify() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                            className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                         >
                             {loading ? 'VERIFYING...' : 'Verify Code'}
                         </button>

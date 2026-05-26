@@ -1,11 +1,10 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Footer() {
     return (
         <>
             {/* Scattered Telemetry & Preserved Details */}
-            <footer className="relative z-10 mt-auto flex w-full select-none flex-col items-end justify-between gap-12 px-6 pb-6 font-['Inter'] selection:bg-[#dfed2b] selection:text-black md:flex-row md:px-12">
+            <footer className="relative z-10 mt-auto flex w-full select-none flex-col items-end justify-between gap-12 px-6 pb-6 font-['Inter'] selection:bg-[#d4e157] selection:text-black md:flex-row md:px-12">
                 {/* Dynamic Footer / TBD */}
             </footer>
 
@@ -27,7 +26,7 @@ export default function Footer() {
                 >
                     Terms of Service
                 </Link>
-                <span className="bg-[#dfed2b] px-2 py-1 font-black text-black shadow-md">
+                <span className="bg-[#d4e157] px-2 py-1 font-black text-black shadow-md">
                     System Online
                 </span>
             </div>

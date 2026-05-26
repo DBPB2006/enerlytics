@@ -12,16 +12,18 @@ use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     /**
-     * Redirect to Google OAuth provider (Unit II Redirects)
+     * Redirect to Google OAuth provider
      */
     public function redirectToGoogle(Request $request)
     {
         $mode = $request->query('mode', 'login');
         $mfa = $request->query('mfa_opt_in', 0);
+        $role = $request->query('role', 'citizen');
 
         $state = json_encode([
             'mode' => $mode,
             'mfa' => $mfa,
+            'role' => $role,
         ]);
 
         return Socialite::driver('google')
@@ -31,7 +33,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle Google OAuth Callback (Unit II redirects & Unit IV session management)
+     * Handle Google OAuth Callback
      */
     public function handleGoogleCallback(Request $request)
     {
@@ -41,28 +43,55 @@ class AuthController extends Controller
 
             $mode = $state['mode'] ?? 'login';
             $mfaOptIn = $state['mfa'] ?? 0;
+            $role = $state['role'] ?? 'citizen';
 
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (! $user) {
+                // Generate unique_id for energy providers or community leaders
+                $uniqueId = null;
+                if (in_array($role, ['energy_provider', 'community_leader'])) {
+                    $prefix = $role === 'energy_provider' ? 'EP' : 'CL';
+                    do {
+                        $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                    } while (User::where('unique_id', $uniqueId)->exists());
+                }
+
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
                     'password' => Hash::make(uniqid()),
-                    'mfa_required' => (bool) $mfaOptIn,
-                    'role' => 'citizen',
-                    'is_validated' => true,
-                    'unique_id' => null,
+                    'mfa_required' => (bool) $mfaOptIn || ($role === 'community_leader') || ($role === 'energy_provider'),
+                    'role' => $role,
+                    'is_validated' => ($role === 'citizen'),
+                    'unique_id' => $uniqueId,
                 ]);
             }
 
-            // Enforce that if user is a community leader or belongs to any community group, MFA is required.
-            if ($user->role === 'community_leader' || $user->groups()->exists()) {
+            // Link Google credentials if they log in with Google and it's not linked yet
+            if (empty($user->google_id)) {
+                $user->update([
+                    'google_id' => $googleUser->getId(),
+                    'avatar' => $googleUser->getAvatar(),
+                ]);
+            }
+
+            // Enforce that if user is a community leader, energy provider, or belongs to any community group, MFA is required.
+            if ($user->role === 'community_leader' || $user->role === 'energy_provider' || $user->groups()->exists()) {
                 if (! $user->mfa_required) {
                     $user->update(['mfa_required' => true]);
                 }
+            }
+
+            // Self-heal missing unique Validation IDs for operators (e.g. existing accounts logging in via Google)
+            if (in_array($user->role, ['energy_provider', 'community_leader']) && empty($user->unique_id)) {
+                $prefix = $user->role === 'energy_provider' ? 'EP' : 'CL';
+                do {
+                    $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                } while (User::where('unique_id', $uniqueId)->exists());
+                $user->update(['unique_id' => $uniqueId]);
             }
 
             // MFA Check MUST happen BEFORE token creation
@@ -76,7 +105,7 @@ class AuthController extends Controller
 
             Auth::login($user);
             
-            // Unit IV: Storing session data and regenerating session identifier
+            // Regenerate session identifier upon successful OAuth login
             $request->session()->regenerate();
 
             return redirect("http://localhost:5173/auth/callback?token=session_token");
@@ -89,22 +118,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Register a new operator (Unit V validations with custom messages & Unit IV sessions)
+     * Register a new operator
      */
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\-\[\]{}|;:,.<>?~/]).+$/'],
             'role' => 'sometimes|string|in:citizen,energy_provider,community_leader',
         ], [
             'name.required' => 'The operator name is mandatory.',
+            'name.regex' => 'The operator name must contain only letters and spaces.',
             'email.required' => 'A valid email address is required.',
             'email.email' => 'Please provide a standard email format.',
+            'email.regex' => 'Please provide a standard email format with a valid domain extension.',
             'email.unique' => 'This email is already registered in the grid.',
             'password.required' => 'A secure password is required.',
             'password.min' => 'The password must contain at least 8 characters.',
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
         $role = $validated['role'] ?? 'citizen';
@@ -123,7 +155,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'mfa_required' => $mfaOptIn || ($role === 'community_leader'),
+            'mfa_required' => $mfaOptIn || ($role === 'community_leader') || ($role === 'energy_provider'),
             'role' => $role,
             'unique_id' => $uniqueId,
             'is_validated' => ($role === 'citizen'),
@@ -138,7 +170,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         
-        // Unit IV: Session management
+        // Establish authenticated session for the registered user
         $request->session()->regenerate();
 
         return response()->json([
@@ -148,7 +180,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Log in credentials check (Unit V validation & Unit IV sessions)
+     * Log in credentials check
      */
     public function login(Request $request)
     {
@@ -169,14 +201,25 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Enforce that if user is a community leader or belongs to any community group, MFA is required.
-        if ($user->role === 'community_leader' || $user->groups()->exists()) {
+        // Enforce that if user is a community leader, energy provider, or belongs to any community group, MFA is required.
+        if ($user->role === 'community_leader' || $user->role === 'energy_provider' || $user->groups()->exists()) {
             if (! $user->mfa_required) {
                 $user->update(['mfa_required' => true]);
             }
         }
 
+        // Self-heal missing unique Validation IDs for operators (e.g. existing accounts logging in via standard credentials)
+        if (in_array($user->role, ['energy_provider', 'community_leader']) && empty($user->unique_id)) {
+            $prefix = $user->role === 'energy_provider' ? 'EP' : 'CL';
+            do {
+                $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            } while (User::where('unique_id', $uniqueId)->exists());
+            $user->update(['unique_id' => $uniqueId]);
+        }
+
         if ($user->mfa_required) {
+            Auth::logout(); // Ensure session is protected until OTP is validated!
+
             if (! $user->mfa_enabled) {
                 return response()->json([
                     'mfa_setup_required' => true,
@@ -190,7 +233,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Unit IV: Sessions management
+        // Establish authenticated session for the verified user
         $request->session()->regenerate();
 
         return response()->json([
@@ -200,13 +243,13 @@ class AuthController extends Controller
     }
 
     /**
-     * Terminate operator session (Unit IV sessions - deleting session data)
+     * Terminate operator session
      */
     public function logout(Request $request)
     {
         Auth::logout();
         
-        // Unit IV: Invalidate and regenerate CSRF session tokens
+        // Invalidate and regenerate CSRF session tokens to prevent session fixation
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -216,7 +259,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Validate citizen registration (Unit V form validation checks)
+     * Validate citizen registration
      */
     public function validateParticipation(Request $request)
     {
@@ -225,6 +268,13 @@ class AuthController extends Controller
         ], [
             'unique_id.required' => 'Please input a unique member validation ID.',
         ]);
+
+        $loggedInUser = Auth::user();
+        if ($loggedInUser->unique_id !== $request->unique_id) {
+            return response()->json([
+                'message' => 'The provided validation ID does not match your account.'
+            ], 403);
+        }
 
         $user = User::where('unique_id', $request->unique_id)->first();
 

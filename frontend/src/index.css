@@ -6,7 +6,7 @@
     :root {
         --bg-primary: #e1ebed; /* Main background */
         --text-primary: #000000;
-        --accent-neon: #dfed2b;
+        --accent-neon: #d4e157;
 
         --eco-solar: #fff066;
         --eco-wind: #a2e3e3;
@@ -90,9 +90,9 @@
     /* Neon Shadows Mapped to Energy Themes */
     .hover-glow-solar:hover {
         box-shadow:
-            0 0 25px rgba(223, 237, 43, 0.25),
-            0 0 50px rgba(223, 237, 43, 0.12);
-        border-color: rgba(223, 237, 43, 0.4) !important;
+            0 0 25px rgba(212, 225, 87, 0.25),
+            0 0 50px rgba(212, 225, 87, 0.12);
+        border-color: rgba(212, 225, 87, 0.4) !important;
     }
     .hover-glow-wind:hover {
         box-shadow:
@@ -119,8 +119,8 @@
         border-color: rgba(255, 164, 122, 0.4) !important;
     }
     .hover-glow-neon:hover {
-        box-shadow: 0 0 20px rgba(223, 237, 43, 0.4);
-        border-color: #dfed2b !important;
+        box-shadow: 0 0 20px rgba(212, 225, 87, 0.4);
+        border-color: #d4e157 !important;
     }
 
     /* Vector Icon Micro-Rotations on Container Group Hover */

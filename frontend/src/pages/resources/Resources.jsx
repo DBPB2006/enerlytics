@@ -1,19 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
     Compass,
-    Loader2,
     X,
     Search,
     Sliders,
     ChevronRight,
-    Sun,
-    Wind,
-    Droplet,
-    Flame,
-    Globe,
 } from 'lucide-react';
 import api from '../../utils/api';
 
@@ -31,7 +25,7 @@ import 'leaflet/dist/leaflet.css';
 const getTypeColor = (type) => {
     switch (type.toLowerCase()) {
         case 'solar':
-            return { primary: '#dfed2b', text: '#000' };
+            return { primary: '#d4e157', text: '#000' };
         case 'wind':
             return { primary: '#A2E3E3', text: '#000' };
         case 'hydro':
@@ -46,7 +40,7 @@ const getTypeColor = (type) => {
 };
 
 const getMarkerIconHtml = (type, colors, active) => {
-    let iconHtml = '';
+    let iconHtml;
     switch (type.toLowerCase()) {
         case 'solar':
             iconHtml = `<img src="/solar.png" alt="Solar" class="w-12 h-12 object-contain" />`;
@@ -79,7 +73,7 @@ const getMarkerIconHtml = (type, colors, active) => {
       ${
           active
               ? `
-        <div class="absolute -top-6 bg-black text-[#dfed2b] px-2 py-0.5 text-[8px] font-['Montserrat'] whitespace-nowrap z-20 shadow-2xl font-bold">
+        <div class="absolute -top-6 bg-black text-[#d4e157] px-2 py-0.5 text-[8px] font-['Montserrat'] whitespace-nowrap z-20 shadow-2xl font-bold">
           NODE ACTIVE
         </div>
       `
@@ -162,8 +156,6 @@ function MapEventsTracker({ setMouseCoords, isClickingCoords, navigate }) {
 export default function Resources() {
     const navigate = useNavigate();
     const [resources, setResources] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTypes, setSelectedTypes] = useState([]);
@@ -172,7 +164,7 @@ export default function Resources() {
         'maintenance',
         'offline',
     ]);
-    const [minCapacity, setMinCapacity] = useState(0);
+    const minCapacity = 0;
     const [maxCapacity, setMaxCapacity] = useState(500);
 
     const [selectedResource, setSelectedResource] = useState(null);
@@ -189,17 +181,13 @@ export default function Resources() {
     useEffect(() => {
         const fetchResources = async () => {
             try {
-                setError('');
                 const response = await api.get('/resources');
                 const data = response.data || [];
                 setResources(data);
                 setSelectedResource(null);
-            } catch (err) {
+            } catch {
                 setResources([]);
                 setSelectedResource(null);
-                setError('Failed to load energy nodes from database.');
-            } finally {
-                setLoading(false);
             }
         };
         fetchResources();
@@ -251,7 +239,7 @@ export default function Resources() {
         .leaflet-container { font-family: 'JetBrains Mono', monospace !important; background-color: #E1EBED !important; }
         .leaflet-bar { border: 1px solid rgba(0,0,0,0.2) !important; box-shadow: none !important; border-radius: 0 !important; }
         .leaflet-bar a { background-color: rgba(255,255,255,0.8) !important; color: #000 !important; border-bottom: 1px solid rgba(0,0,0,0.1) !important; }
-        .leaflet-bar a:hover { background-color: #dfed2b !important; }
+        .leaflet-bar a:hover { background-color: #d4e157 !important; }
         .custom-leaflet-marker { background: transparent !important; border: none !important; }
 
         .custom-leaflet-tooltip {
@@ -317,7 +305,7 @@ export default function Resources() {
                                         <h4 className="font-['Montserrat'] text-sm font-black uppercase">
                                             {res.title}
                                         </h4>
-                                        <div className="mt-1 text-[9px] text-[#dfed2b]">
+                                        <div className="mt-1 text-[9px] text-[#d4e157]">
                                             {res.capacity} MW
                                         </div>
                                     </div>
@@ -358,7 +346,7 @@ export default function Resources() {
                 animate={{ left: isSidebarOpen ? '400px' : '0px' }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`absolute top-1/2 z-[4000] hidden -translate-y-1/2 cursor-pointer border border-black/10 bg-black p-3 text-[#dfed2b] shadow-2xl transition-colors hover:bg-[#dfed2b] hover:text-black md:flex ${!isSidebarOpen && 'ml-4'}`}
+                className={`absolute top-1/2 z-[4000] hidden -translate-y-1/2 cursor-pointer border border-black/10 bg-black p-3 text-[#d4e157] shadow-2xl transition-colors hover:bg-[#d4e157] hover:text-black md:flex ${!isSidebarOpen && 'ml-4'}`}
             >
                 <ChevronRight
                     className={`h-6 w-6 transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`}
@@ -368,7 +356,7 @@ export default function Resources() {
             {/* Mobile Sidebar Toggle */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="absolute bottom-24 right-6 z-[4000] rounded-full border border-black/10 bg-black p-4 text-[#dfed2b] shadow-2xl md:hidden"
+                className="absolute bottom-24 right-6 z-[4000] rounded-full border border-black/10 bg-black p-4 text-[#d4e157] shadow-2xl md:hidden"
             >
                 <Sliders className="h-6 w-6" />
             </button>
@@ -415,7 +403,7 @@ export default function Resources() {
                         className={`flex w-full items-center justify-center gap-2 py-3 font-['Montserrat'] text-xs font-black uppercase transition-colors ${
                             isClickingCoords
                                 ? 'bg-red-500 text-white'
-                                : 'bg-[#dfed2b] text-black hover:bg-black hover:text-white'
+                                : 'bg-[#d4e157] text-black hover:bg-black hover:text-white'
                         }`}
                     >
                         <Plus className="h-4 w-4" />
@@ -588,7 +576,12 @@ export default function Resources() {
                                     <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between">
                                         <div className="mb-2 flex items-start justify-between">
                                             <h3 className="truncate pr-4 font-['Montserrat'] text-lg font-black uppercase leading-tight text-black transition-colors duration-300 group-hover:text-black">
-                                                {res.title}
+                                                {res.title}{' '}
+                                                {res.creator?.role === 'energy_provider' && (
+                                                    <span className="ml-2 inline-block bg-[#d4e157] px-1.5 py-0.5 font-['Montserrat'] text-[8px] font-black uppercase tracking-widest text-black shadow-sm align-middle">
+                                                        ★ VERIFIED ★
+                                                    </span>
+                                                )}
                                             </h3>
                                             <ChevronRight className="h-4 w-4 shrink-0 text-black/30 transition-all duration-300 group-hover:text-black" />
                                         </div>
@@ -644,7 +637,7 @@ export default function Resources() {
                         <div className="flex-1 space-y-4 overflow-y-auto p-6 font-['Montserrat'] text-xs font-bold uppercase text-black">
                             <div className="flex items-center justify-between border-b border-black/10 pb-2">
                                 <span className="text-black/40">STATUS:</span>
-                                <span className="border border-black/10 bg-[#dfed2b] px-2 py-1">
+                                <span className="border border-black/10 bg-[#d4e157] px-2 py-1">
                                     {selectedResource.status}
                                 </span>
                             </div>
@@ -682,7 +675,7 @@ export default function Resources() {
                         <div className="bg-black p-6 text-white">
                             <Link
                                 to={`/resources/${selectedResource.id}`}
-                                className="flex w-full items-center justify-center gap-2 bg-white py-3 text-[10px] font-black uppercase tracking-widest text-black transition-colors hover:bg-[#dfed2b]"
+                                className="flex w-full items-center justify-center gap-2 bg-white py-3 text-[10px] font-black uppercase tracking-widest text-black transition-colors hover:bg-[#d4e157]"
                             >
                                 <Compass className="h-4 w-4" />
                                 DEEP DIVE SPECS

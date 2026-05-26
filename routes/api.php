@@ -13,10 +13,11 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Organized cleanly following the INT221 Advanced Routing syllabus:
-| - Route Groups, Route Prefixing (Unit III)
-| - Parameter Constraints (Unit III)
-| - Named Routes (Unit III)
+| Exposes HTTP endpoints for grid operators and citizens:
+| - Authentication & Google OAuth
+| - Multi-Factor Authentication (MFA)
+| - Cooperative Community Groups
+| - Renewable Resource Telemetry
 |
 */
 
@@ -32,7 +33,7 @@ Route::name('auth.')->group(function () {
     });
 });
 
-// --- Parameter Constraints (Unit III) for Status Checking ---
+// --- Account status lookup with format constraints ---
 Route::get('/users/status/{unique_id}', [AuthController::class, 'checkStatus'])
     ->where('unique_id', '[A-Z]{2}-\d{6}')
     ->name('users.status');
@@ -44,7 +45,7 @@ Route::prefix('mfa')->name('mfa.')->group(function () {
     Route::post('/verify', [MfaController::class, 'verify'])->name('verify');
 });
 
-// --- Protected Operator Node Ports (Unit III: Route Groups and Middleware) ---
+// --- Protected Grid Endpoints (Requires User Authentication) ---
 Route::middleware('auth')->group(function () {
     
     // User Operations
@@ -54,7 +55,7 @@ Route::middleware('auth')->group(function () {
     })->name('auth.user');
     Route::post('/users/validate', [AuthController::class, 'validateParticipation'])->name('users.validate');
 
-    // Groups Routes (Unit III: Route Prefixing & Grouping)
+    // Cooperative Group Administration Endpoints
     Route::prefix('groups')->name('groups.')->group(function () {
         Route::get('/', [GroupController::class, 'index'])->name('index');
         Route::get('/discover', [GroupController::class, 'discover'])->name('discover');
@@ -77,7 +78,7 @@ Route::middleware('auth')->group(function () {
         })->where('id', '[0-9]+');
     });
 
-    // Resources Unified System Routes (Unit III Restful Resource-like endpoints)
+    // Unified Energy Resource Management Endpoints
     Route::prefix('resources')->name('resources.')->group(function () {
         Route::get('/categories/summary', [ResourceController::class, 'categorySummary'])->name('categories.summary');
         Route::get('/', [ResourceController::class, 'index'])->name('index');

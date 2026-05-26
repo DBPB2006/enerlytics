@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -18,19 +18,17 @@ export default function MfaSetup() {
     const [secret, setSecret] = useState('');
     const [code, setCode] = useState('');
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(userId ? true : false);
+    const [error, setError] = useState(
+        userId
+            ? ''
+            : 'Please sign in first to set up Multi-Factor Authentication.',
+    );
     const [submitLoading, setSubmitLoading] = useState(false);
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (!userId) {
-            setError(
-                'Please sign in first to set up Multi-Factor Authentication.',
-            );
-            setLoading(false);
-            return;
-        }
+        if (!userId) return;
 
         const initMfa = async () => {
             try {
@@ -55,12 +53,19 @@ export default function MfaSetup() {
     const handleVerify = async (e) => {
         e.preventDefault();
         setError('');
+
+        const cleanedCode = code.replace(/\s+/g, '');
+        if (!cleanedCode || cleanedCode.length !== 6 || isNaN(cleanedCode)) {
+            setError('Please enter a valid 6-digit verification code.');
+            return;
+        }
+
         setSubmitLoading(true);
 
         try {
             const response = await api.post('/mfa/enable', {
                 user_id: userId,
-                code: code,
+                code: cleanedCode,
             });
             if (response.data.token && response.data.user) {
                 dispatch(loginSuccess({ token: response.data.token, user: response.data.user }));
@@ -113,7 +118,7 @@ export default function MfaSetup() {
 
                     <div className="space-y-6">
                         {error && (
-                            <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                            <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                 <AlertCircle className="h-4 w-4 shrink-0" />
                                 <span>{error}</span>
                             </div>
@@ -150,7 +155,7 @@ export default function MfaSetup() {
                                 />
                                 <button
                                     onClick={copySecret}
-                                    className="flex cursor-pointer items-center justify-center border border-black/10 bg-[#dfed2b] px-6 font-bold text-black transition-colors hover:bg-black hover:text-white"
+                                    className="flex cursor-pointer items-center justify-center border border-black/10 bg-[#d4e157] px-6 font-bold text-black transition-colors hover:bg-black hover:text-white"
                                     title="Copy secret key"
                                 >
                                     {copied ? (
@@ -189,7 +194,7 @@ export default function MfaSetup() {
                             <button
                                 type="submit"
                                 disabled={submitLoading}
-                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                             >
                                 {submitLoading ? 'VERIFYING...' : 'Enable MFA'}
                             </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -48,7 +48,7 @@ export default function AuthCallback() {
                     setTimeout(() => {
                         navigate('/');
                     }, 1500);
-                } catch (err) {
+                } catch {
                     localStorage.removeItem('token');
                     navigate(
                         '/login?error=' +

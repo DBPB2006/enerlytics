@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -26,7 +26,7 @@ const CATEGORY_DETAILS = {
     solar: {
         title: 'SOLAR ARRAY',
         icon: Sun,
-        color: '#dfed2b',
+        color: '#d4e157',
         image: '/solar.png',
         tagline: 'Unlocking democratic grid reserves from our nearest star.',
         description:
@@ -150,11 +150,8 @@ export default function CategoryOverview() {
                         .map((r) => r.title);
                     setLiveHotspots(names);
                 }
-            } catch (err) {
-                console.error(
-                    'Failed to fetch live category overview data',
-                    err,
-                );
+            } catch {
+                // Silently handle error for clean production logs
             }
         };
         fetchLiveData();
@@ -256,7 +253,7 @@ export default function CategoryOverview() {
                             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/80 to-transparent" />
                         </div>
 
-                        <div className="z-25 absolute right-0 top-0 bg-[#dfed2b] px-4 py-1 font-['Montserrat'] text-[10px] font-bold tracking-wider text-black">
+                        <div className="z-25 absolute right-0 top-0 bg-[#d4e157] px-4 py-1 font-['Montserrat'] text-[10px] font-bold tracking-wider text-black">
                             AUDITED RESOURCE DATA
                         </div>
 
@@ -264,16 +261,16 @@ export default function CategoryOverview() {
                             <div className="mb-6 flex items-center gap-4">
                                 <motion.div
                                     whileHover={{ rotate: 15 }}
-                                    className="bg-[#dfed2b] p-4 text-black shadow-lg"
+                                    className="bg-[#d4e157] p-4 text-black shadow-lg"
                                 >
                                     <IconComponent className="h-6 w-6" />
                                 </motion.div>
-                                <span className="border border-[#dfed2b]/30 bg-white/10 px-2 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b] backdrop-blur-sm">
+                                <span className="border border-[#d4e157]/30 bg-white/10 px-2 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157] backdrop-blur-sm">
                                     RENEWABLE DIVISION
                                 </span>
                             </div>
 
-                            <h1 className="font-['Montserrat'] text-5xl font-black uppercase leading-none tracking-tighter text-white transition-colors duration-700 group-hover:text-[#dfed2b] md:text-7xl">
+                            <h1 className="font-['Montserrat'] text-5xl font-black uppercase leading-none tracking-tighter text-white transition-colors duration-700 group-hover:text-[#d4e157] md:text-7xl">
                                 {details.title}
                             </h1>
 
@@ -293,7 +290,7 @@ export default function CategoryOverview() {
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="flex items-center gap-2 bg-[#dfed2b] px-6 py-4 font-['Montserrat'] text-xs font-black uppercase text-black shadow-xl transition-colors hover:bg-white"
+                                    className="flex items-center gap-2 bg-[#d4e157] px-6 py-4 font-['Montserrat'] text-xs font-black uppercase text-black shadow-xl transition-colors hover:bg-white"
                                 >
                                     <BookOpen className="h-4 w-4" />
                                     PLAYBOOKS & GUIDES
@@ -336,7 +333,7 @@ export default function CategoryOverview() {
                                 <div className="h-2 w-2 rounded-full bg-black" />
                             </div>
                             <div
-                                className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-black transition-colors group-hover:text-[#dfed2b]"
+                                className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-black transition-colors group-hover:text-[#d4e157]"
                                 style={{ WebkitTextStroke: '1px black' }}
                             >
                                 {liveSummary
@@ -360,7 +357,7 @@ export default function CategoryOverview() {
                                 <div className="h-2 w-2 rounded-sm bg-black" />
                             </div>
                             <div
-                                className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-black transition-colors group-hover:text-[#dfed2b]"
+                                className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-black transition-colors group-hover:text-[#d4e157]"
                                 style={{ WebkitTextStroke: '1px black' }}
                             >
                                 {liveSummary
@@ -377,15 +374,15 @@ export default function CategoryOverview() {
                             whileHover={{ scale: 1.02 }}
                             className="group relative flex flex-1 cursor-pointer flex-col justify-between overflow-hidden bg-black p-6 text-white shadow-2xl"
                         >
-                            <div className="absolute inset-0 z-0 translate-x-full bg-[#dfed2b] transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                            <div className="absolute inset-0 z-0 translate-x-full bg-[#d4e157] transition-transform duration-500 ease-out group-hover:translate-x-0" />
                             <div className="relative z-10">
                                 <div className="flex items-start justify-between">
                                     <span className="font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-white/60 transition-colors group-hover:text-black/60">
                                         Displacement
                                     </span>
-                                    <div className="h-2 w-2 rounded-sm bg-[#dfed2b] transition-colors group-hover:bg-black" />
+                                    <div className="h-2 w-2 rounded-sm bg-[#d4e157] transition-colors group-hover:bg-black" />
                                 </div>
-                                <div className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] transition-colors group-hover:text-black">
+                                <div className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-[#d4e157] transition-colors group-hover:text-black">
                                     {liveSummary
                                         ? `${(liveSummary.total_output * 280).toLocaleString(undefined, { maximumFractionDigits: 0 })}T CO₂`
                                         : '0T CO₂'}
@@ -494,7 +491,7 @@ export default function CategoryOverview() {
                                                         }}
                                                         className="border border-white/20 bg-black p-3 font-['Montserrat'] text-xs font-bold text-white shadow-2xl"
                                                     >
-                                                        <p className="mb-1 text-[9px] uppercase text-[#dfed2b]">
+                                                        <p className="mb-1 text-[9px] uppercase text-[#d4e157]">
                                                             TIME:{' '}
                                                             {
                                                                 payload[0]
@@ -522,7 +519,7 @@ export default function CategoryOverview() {
                                         fill="url(#colorTrend)"
                                         activeDot={{
                                             r: 6,
-                                            fill: '#dfed2b',
+                                            fill: '#d4e157',
                                             stroke: '#000',
                                             strokeWidth: 2,
                                         }}
@@ -578,7 +575,7 @@ export default function CategoryOverview() {
                             whileHover={{ scale: 1.02 }}
                             className="group relative flex cursor-pointer items-center justify-between overflow-hidden bg-black p-6 text-white shadow-2xl"
                         >
-                            <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-300 ease-out group-hover:translate-y-0"></div>
+                            <div className="absolute inset-0 z-0 translate-y-full bg-[#d4e157] transition-transform duration-300 ease-out group-hover:translate-y-0"></div>
                             <div className="relative z-10 flex items-center gap-4 transition-colors group-hover:text-black">
                                 <Globe className="h-8 w-8 opacity-50 transition-opacity group-hover:opacity-100" />
                                 <div>
@@ -592,7 +589,7 @@ export default function CategoryOverview() {
                             </div>
                             <Link
                                 to="/resources/create"
-                                className="relative z-10 border border-white/20 bg-white/10 px-4 py-2 font-['Montserrat'] text-[10px] font-bold backdrop-blur-sm transition-colors hover:bg-black hover:text-[#dfed2b] group-hover:border-black/20 group-hover:bg-white/40 group-hover:text-black"
+                                className="relative z-10 border border-white/20 bg-white/10 px-4 py-2 font-['Montserrat'] text-[10px] font-bold backdrop-blur-sm transition-colors hover:bg-black hover:text-[#d4e157] group-hover:border-black/20 group-hover:bg-white/40 group-hover:text-black"
                             >
                                 INITIATE
                             </Link>

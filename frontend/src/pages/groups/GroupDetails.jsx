@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -26,10 +26,10 @@ export default function GroupDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const fetchGroupDetails = async () => {
+    const fetchGroupDetails = useCallback(async () => {
         try {
-            setError('');
             const groupRes = await api.get(`/groups/${id}`);
+            setError('');
             setGroup(groupRes.data);
 
             const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -64,11 +64,12 @@ export default function GroupDetails() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, navigate]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchGroupDetails();
-    }, [id]);
+    }, [fetchGroupDetails]);
 
     const handleApprove = async (userId) => {
         try {
@@ -76,10 +77,10 @@ export default function GroupDetails() {
             confetti({
                 particleCount: 50,
                 spread: 40,
-                colors: ['#dfed2b', '#ffffff'],
+                colors: ['#d4e157', '#ffffff'],
             });
             fetchGroupDetails();
-        } catch (err) {
+        } catch {
             alert('Failed to approve membership request.');
         }
     };
@@ -88,7 +89,7 @@ export default function GroupDetails() {
         try {
             await api.post(`/groups/${id}/reject/${userId}`);
             fetchGroupDetails();
-        } catch (err) {
+        } catch {
             alert('Failed to reject membership request.');
         }
     };
@@ -107,7 +108,7 @@ export default function GroupDetails() {
         try {
             await api.post(`/groups/${id}/promote/${userId}`);
             fetchGroupDetails();
-        } catch (err) {
+        } catch {
             alert('Failed to promote user.');
         }
     };
@@ -149,7 +150,7 @@ export default function GroupDetails() {
                         </p>
                         <Link
                             to="/groups"
-                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                         >
                             <ArrowLeft className="h-4 w-4" /> Back to directory
                         </Link>
@@ -207,7 +208,7 @@ export default function GroupDetails() {
 
                         <div className="flex items-center gap-3 self-start font-['Montserrat'] text-xs md:self-auto">
                             <div className="flex border border-black/20 bg-white shadow-md">
-                                <span className="border-r border-black/20 bg-[#dfed2b] px-4 py-2 font-black uppercase tracking-widest text-black">
+                                <span className="border-r border-black/20 bg-[#d4e157] px-4 py-2 font-black uppercase tracking-widest text-black">
                                     ROLE: {currentUserRole}
                                 </span>
                                 {currentUserRole !== 'owner' && (
@@ -246,7 +247,7 @@ export default function GroupDetails() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    {resources.map((res, idx) => (
+                                    {resources.map((res) => (
                                         <div
                                             key={res.id}
                                             className="flex flex-col justify-between border border-black/10 bg-white/40 p-5 transition-colors hover:bg-white/60"
@@ -291,7 +292,7 @@ export default function GroupDetails() {
 
                                             <Link
                                                 to={`/resources/${res.id}`}
-                                                className="flex w-full items-center justify-center gap-2 bg-black py-3 text-center font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                className="flex w-full items-center justify-center gap-2 bg-black py-3 text-center font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                             >
                                                 DEEP DIVE DETAILS{' '}
                                                 <Activity className="h-4 w-4" />
@@ -327,8 +328,8 @@ export default function GroupDetails() {
                         </div>
 
                         {isAdminOrOwner && (
-                            <div className="eco-nexus-glass-card relative overflow-hidden bg-[#dfed2b]/20 p-6 shadow-xl md:p-8">
-                                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                            <div className="eco-nexus-glass-card relative overflow-hidden bg-[#d4e157]/20 p-6 shadow-xl md:p-8">
+                                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                                     INBOX
                                 </div>
                                 <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
@@ -344,7 +345,7 @@ export default function GroupDetails() {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {requests.map((r, idx) => (
+                                        {requests.map((r) => (
                                             <div
                                                 key={r.id}
                                                 className="space-y-4 border border-black/10 bg-white/60 p-5 font-['Montserrat'] text-xs font-bold"
@@ -362,7 +363,7 @@ export default function GroupDetails() {
                                                         onClick={() =>
                                                             handleApprove(r.id)
                                                         }
-                                                        className="flex flex-1 items-center justify-center gap-2 bg-black py-3 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                        className="flex flex-1 items-center justify-center gap-2 bg-black py-3 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                                     >
                                                         <Check className="h-4 w-4" />{' '}
                                                         APPROVE
@@ -396,7 +397,7 @@ export default function GroupDetails() {
                             </h2>
 
                             <div className="space-y-3">
-                                {members.map((m, idx) => (
+                                {members.map((m) => (
                                     <div
                                         key={m.id}
                                         className="flex flex-col justify-between gap-4 border border-black/10 bg-white/40 p-4 font-['Montserrat'] text-xs font-bold sm:flex-row sm:items-center"
@@ -420,7 +421,7 @@ export default function GroupDetails() {
                                                                     m.id,
                                                                 )
                                                             }
-                                                            className="bg-black px-4 py-2 text-[9px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                            className="bg-black px-4 py-2 text-[9px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                                         >
                                                             PROMOTE
                                                         </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -24,16 +24,20 @@ export default function Signup() {
         const errors = { name: '', email: '', password: '' };
 
         // Name validation
+        const nameRegex = /^[a-zA-Z\s]+$/;
         if (!name.trim()) {
             errors.name = 'Full name is required.';
             isValid = false;
         } else if (name.trim().length < 3) {
             errors.name = 'Name must be at least 3 characters.';
             isValid = false;
+        } else if (!nameRegex.test(name)) {
+            errors.name = 'Name must contain only letters and spaces.';
+            isValid = false;
         }
 
         // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!email) {
             errors.email = 'Email address is required.';
             isValid = false;
@@ -43,11 +47,15 @@ export default function Signup() {
         }
 
         // Password validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\-[\]{}|;:,.<>?~/]).+$/;
         if (!password) {
             errors.password = 'Password is required.';
             isValid = false;
-        } else if (password.length < 6) {
-            errors.password = 'Password must be at least 6 characters.';
+        } else if (password.length < 8) {
+            errors.password = 'Password must be at least 8 characters.';
+            isValid = false;
+        } else if (!passwordRegex.test(password)) {
+            errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.';
             isValid = false;
         }
 
@@ -71,7 +79,7 @@ export default function Signup() {
                 email,
                 password,
                 role,
-                mfa_opt_in: mfaOptIn,
+                mfa_opt_in: mfaOptIn || role === 'energy_provider' || role === 'community_leader',
             });
             const data = response.data;
 
@@ -92,7 +100,7 @@ export default function Signup() {
     };
 
     const handleGoogleSSO = () => {
-        window.location.href = `http://localhost:8000/api/auth/google/redirect?mode=register&mfa_opt_in=${mfaOptIn ? 1 : 0}`;
+        window.location.href = `http://localhost:8000/api/auth/google/redirect?mode=register&role=${role}&mfa_opt_in=${(mfaOptIn || role === 'energy_provider' || role === 'community_leader') ? 1 : 0}`;
     };
 
     return (
@@ -105,7 +113,7 @@ export default function Signup() {
             {/* 1. Left Illustrative Pane */}
             <div className="relative hidden flex-col justify-center pr-12 lg:flex lg:w-[45%]">
                 <div className="relative z-10 space-y-4">
-                    <div className="inline-block bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black">
+                    <div className="inline-block bg-[#d4e157] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black">
                         REGISTRATION
                     </div>
                     <h1 className="font-['Montserrat'] text-6xl font-black uppercase leading-none tracking-tighter">
@@ -151,7 +159,7 @@ export default function Signup() {
 
                         <form onSubmit={handleSignup} className="space-y-6">
                             {error && (
-                                <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                                <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                     <ShieldAlert className="h-4 w-4 shrink-0" />
                                     <span>{error}</span>
                                 </div>
@@ -216,7 +224,13 @@ export default function Signup() {
                                 <div className="relative">
                                     <select
                                         value={role}
-                                        onChange={(e) => setRole(e.target.value)}
+                                        onChange={(e) => {
+                                            const newRole = e.target.value;
+                                            setRole(newRole);
+                                            if (newRole === 'energy_provider' || newRole === 'community_leader') {
+                                                setMfaOptIn(true);
+                                            }
+                                        }}
                                         className="w-full select-none border border-black/10 bg-white/40 px-4 py-4 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white/60 focus:outline-none"
                                     >
                                         <option value="citizen">Citizen</option>
@@ -256,27 +270,28 @@ export default function Signup() {
                                 )}
                             </div>
 
-                            <div className="flex cursor-pointer items-center gap-4 border border-black/10 bg-white/40 p-4 transition-colors hover:bg-white/60">
-                                <input
-                                    id="mfa"
-                                    type="checkbox"
-                                    checked={mfaOptIn}
-                                    onChange={(e) => setMfaOptIn(e.target.checked)}
-                                    className="h-4 w-4 shrink-0 cursor-pointer accent-black"
-                                />
-                                <label
-                                    htmlFor="mfa"
-                                    className="flex cursor-pointer select-none items-center gap-2 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black"
-                                >
-                                    <ShieldCheck className="h-4 w-4 shrink-0" />
-                                    Enable Multi-Factor Authentication (MFA)
-                                </label>
-                            </div>
+                             <div className={`flex cursor-pointer items-center gap-4 border border-black/10 bg-white/40 p-4 transition-colors hover:bg-white/60 ${(role === 'energy_provider' || role === 'community_leader') ? 'opacity-80' : ''}`}>
+                                 <input
+                                     id="mfa"
+                                     type="checkbox"
+                                     checked={mfaOptIn || role === 'energy_provider' || role === 'community_leader'}
+                                     disabled={role === 'energy_provider' || role === 'community_leader'}
+                                     onChange={(e) => setMfaOptIn(e.target.checked)}
+                                     className="h-4 w-4 shrink-0 cursor-pointer accent-black"
+                                 />
+                                 <label
+                                     htmlFor="mfa"
+                                     className="flex cursor-pointer select-none items-center gap-2 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black"
+                                 >
+                                     <ShieldCheck className="h-4 w-4 shrink-0" />
+                                     Enable Multi-Factor Authentication (MFA) {(role === 'energy_provider' || role === 'community_leader') && <span className="text-[8px] text-red-500 font-black">(MANDATORY)</span>}
+                                 </label>
+                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
+                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black disabled:opacity-50"
                             >
                                 {loading ? 'SIGNING UP...' : 'SIGN UP'}
                             </button>
@@ -312,7 +327,7 @@ export default function Signup() {
                                 Already have an account?{' '}
                                 <Link
                                     to="/login"
-                                    className="px-1 font-black text-black underline transition-colors hover:bg-black hover:text-[#dfed2b]"
+                                    className="px-1 font-black text-black underline transition-colors hover:bg-black hover:text-[#d4e157]"
                                 >
                                     Sign In
                                 </Link>

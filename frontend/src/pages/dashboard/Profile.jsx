@@ -1,32 +1,61 @@
-import React from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
     LogOut,
     ShieldAlert,
-    Key,
-    HardDrive,
     Terminal,
     Award,
     Zap,
-    Compass,
-    Sparkles,
     UserCheck,
+    CheckCircle2,
+    AlertCircle,
+    Loader2,
 } from 'lucide-react';
 import api from '../../utils/api';
-import { logout } from '../../redux/authSlice';
+import { logout, updateUser } from '../../redux/authSlice';
 
 export default function Profile() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
 
+    const [validationId, setValidationId] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState(null);
+    const [successMsg, setSuccessMsg] = useState(null);
+
+    const handleValidateUniqueId = async (e) => {
+        e.preventDefault();
+        if (!validationId.trim()) return;
+
+        setIsSubmitting(true);
+        setErrorMsg(null);
+        setSuccessMsg(null);
+
+        try {
+            const res = await api.post('/users/validate', {
+                unique_id: validationId.trim().toUpperCase(),
+            });
+            setSuccessMsg(res.data.message || 'Validated successfully!');
+            dispatch(updateUser(res.data.user));
+        } catch (err) {
+            setErrorMsg(
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                'Validation failed. Please verify your validation ID.'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const handleDisconnect = async () => {
         try {
             await api.post('/logout');
-        } catch (e) {
-            console.error('Logout failed', e);
+        } catch {
+            // Silently handle logout error for clean production
         } finally {
             dispatch(logout());
             navigate('/login');
@@ -48,7 +77,7 @@ export default function Profile() {
                         </p>
                         <button
                             onClick={() => navigate('/login')}
-                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                         >
                             SIGN IN
                         </button>
@@ -67,7 +96,7 @@ export default function Profile() {
             title: 'Solar Pioneer',
             desc: 'First 10 MW mapped',
             emoji: '☀️',
-            color: '#dfed2b',
+            color: '#d4e157',
             text: 'text-black',
         },
         {
@@ -102,7 +131,7 @@ export default function Profile() {
         >
             <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-12">
                 <div className="mb-10 space-y-2">
-                    <div className="inline-flex items-center gap-2 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                    <div className="inline-flex items-center gap-2 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                         <UserCheck className="h-3 w-3" /> USER PROFILE
                     </div>
                     <h1 className="font-['Montserrat'] text-5xl font-black uppercase leading-none tracking-tighter text-black md:text-6xl">
@@ -125,7 +154,7 @@ export default function Profile() {
 
                             <div className="space-y-8">
                                 <div className="flex items-center gap-6 border-b border-black/10 pb-6">
-                                    <div className="flex h-20 w-20 items-center justify-center bg-black font-['Montserrat'] text-3xl font-black uppercase tracking-tighter text-[#dfed2b] shadow-md">
+                                    <div className="flex h-20 w-20 items-center justify-center bg-black font-['Montserrat'] text-3xl font-black uppercase tracking-tighter text-[#d4e157] shadow-md">
                                         {user.name.substring(0, 2)}
                                     </div>
                                     <div>
@@ -152,7 +181,7 @@ export default function Profile() {
                                     </div>
                                     <div className="relative h-6 w-full overflow-hidden border border-black/10 bg-white/40">
                                         <div
-                                            className="h-full bg-[#dfed2b]"
+                                            className="h-full bg-[#d4e157]"
                                             style={{
                                                 width: user.is_validated
                                                     ? '100%'
@@ -165,11 +194,79 @@ export default function Profile() {
                                         <Zap className="h-3 w-3" /> Renewable
                                         tracking active
                                     </p>
+
+                                    {!user.is_validated && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mt-6 border border-black/10 bg-black/5 p-5"
+                                        >
+                                            <span className="block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157] bg-black px-2 py-0.5 w-fit mb-3">
+                                                // VERIFICATION PORT
+                                            </span>
+                                            <h3 className="font-['Montserrat'] text-sm font-black uppercase tracking-widest text-black mb-1">
+                                                Enter Validation ID
+                                            </h3>
+                                            <p className="font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-black/60 mb-4 leading-relaxed">
+                                                Operators must input their dynamic 6-digit Validation ID (e.g., CL-XXXXXX or EP-XXXXXX) to enable full grid writes.
+                                            </p>
+
+                                            <form onSubmit={handleValidateUniqueId} className="space-y-3">
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={validationId}
+                                                        onChange={(e) => setValidationId(e.target.value)}
+                                                        placeholder="EP-XXXXXX"
+                                                        disabled={isSubmitting}
+                                                        className="w-full bg-white border border-black/10 px-4 py-3 font-['Montserrat'] text-xs font-bold uppercase tracking-widest text-black placeholder:text-black/30 focus:border-black focus:outline-none disabled:opacity-50"
+                                                    />
+                                                </div>
+
+                                                {errorMsg && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        className="flex items-start gap-2 text-red-500 font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest leading-normal"
+                                                    >
+                                                        <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                                                        <span>{errorMsg}</span>
+                                                    </motion.div>
+                                                )}
+
+                                                {successMsg && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        className="flex items-start gap-2 text-green-600 font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest leading-normal"
+                                                    >
+                                                        <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5" />
+                                                        <span>{successMsg}</span>
+                                                    </motion.div>
+                                                )}
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting || !validationId.trim()}
+                                                    className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-[#d4e157] hover:bg-[#d4e157] hover:text-black transition-colors disabled:opacity-50 disabled:hover:bg-black disabled:hover:text-[#d4e157]"
+                                                >
+                                                    {isSubmitting ? (
+                                                        <>
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                            VERIFYING...
+                                                        </>
+                                                    ) : (
+                                                        'SUBMIT VALIDATION ID'
+                                                    )}
+                                                </button>
+                                            </form>
+                                        </motion.div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-4 pt-4 font-['Montserrat'] text-xs font-bold uppercase sm:grid-cols-2">
                                     <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
-                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
                                                 Account Role
@@ -181,7 +278,7 @@ export default function Profile() {
                                         </div>
                                     </div>
                                     <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
-                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
                                                 MFA Protection
@@ -196,7 +293,7 @@ export default function Profile() {
                                         </div>
                                     </div>
                                     <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
-                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
                                                 Validation ID
@@ -207,7 +304,7 @@ export default function Profile() {
                                         </div>
                                     </div>
                                     <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
-                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                        <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
                                                 Registration Date
@@ -282,7 +379,7 @@ export default function Profile() {
 
                             <div className="space-y-4 font-['Montserrat'] text-xs">
                                 <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:bg-white">
-                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                     <Terminal className="relative z-10 mt-0.5 h-5 w-5 shrink-0 text-black transition-transform duration-500" />
                                     <div className="relative z-10">
                                         <div className="mb-1 font-black uppercase tracking-widest text-black">
@@ -295,7 +392,7 @@ export default function Profile() {
                                 </div>
 
                                 <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:bg-white">
-                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
+                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                     <Terminal className="relative z-10 mt-0.5 h-5 w-5 shrink-0 text-black transition-transform duration-500" />
                                     <div className="relative z-10">
                                         <div className="mb-1 font-black uppercase tracking-widest text-black">

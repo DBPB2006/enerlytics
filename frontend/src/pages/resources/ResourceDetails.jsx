@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -34,7 +34,7 @@ export default function ResourceDetails() {
                 ]);
                 setResource(response.data);
                 setMetrics(metricsRes.data);
-            } catch (err) {
+            } catch {
                 setError(
                     'Failed to fetch resource details or access was denied.',
                 );
@@ -51,7 +51,7 @@ export default function ResourceDetails() {
         try {
             await api.delete(`/resources/${id}`);
             navigate('/resources');
-        } catch (err) {
+        } catch {
             alert('Failed to delete this resource.');
         }
     };
@@ -84,7 +84,7 @@ export default function ResourceDetails() {
                         </p>
                         <Link
                             to="/resources"
-                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                            className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-xs font-black uppercase text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                         >
                             <ArrowLeft className="h-4 w-4" /> Back to Map
                             Directory
@@ -96,9 +96,15 @@ export default function ResourceDetails() {
     }
 
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const canModify =
+    const canDelete =
+        currentUser.role !== 'energy_provider' && (
+            resource.created_by === currentUser.id ||
+            (resource.group && resource.group.owner_id === currentUser.id)
+        );
+    const canEdit =
         resource.created_by === currentUser.id ||
-        (resource.group && resource.group.owner_id === currentUser.id);
+        (resource.group && resource.group.owner_id === currentUser.id) ||
+        currentUser.role === 'energy_provider';
 
     return (
         <motion.div
@@ -120,9 +126,16 @@ export default function ResourceDetails() {
                 <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-white">
                     RESOURCE-{resource.id}
                 </div>
-                <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">
-                    // RESOURCE SPECIFICATIONS
-                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">
+                        // RESOURCE SPECIFICATIONS
+                    </span>
+                    {resource.creator?.role === 'energy_provider' && (
+                        <span className="mb-2 mt-2 inline-flex items-center gap-1 bg-[#d4e157] px-2.5 py-1 font-['Montserrat'] text-[9px] font-black uppercase tracking-widest text-black shadow-sm">
+                            ★ VERIFIED SUPPLIER NODE ★
+                        </span>
+                    )}
+                </div>
                 <h1 className="mb-6 font-['Montserrat'] text-5xl font-black uppercase tracking-tighter text-black">
                     {resource.title}
                 </h1>
@@ -140,21 +153,25 @@ export default function ResourceDetails() {
                         </p>
                     </div>
 
-                    {canModify && (
+                    {(canEdit || canDelete) && (
                         <div className="flex flex-col items-center gap-3 sm:flex-row">
-                            <Link
-                                to={`/resources/edit/${id}`}
-                                className="flex w-full cursor-pointer items-center justify-center gap-2 bg-[#dfed2b] px-6 py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white sm:w-auto"
-                            >
-                                EDIT RESOURCE
-                            </Link>
-                            <button
-                                onClick={handleDelete}
-                                className="flex w-full cursor-pointer items-center justify-center gap-2 bg-red-500 px-6 py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-red-600 sm:w-auto"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                DELETE RESOURCE
-                            </button>
+                            {canEdit && (
+                                <Link
+                                    to={`/resources/edit/${id}`}
+                                    className="flex w-full cursor-pointer items-center justify-center gap-2 bg-[#d4e157] px-6 py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white sm:w-auto"
+                                >
+                                    EDIT RESOURCE
+                                </Link>
+                            )}
+                            {canDelete && (
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex w-full cursor-pointer items-center justify-center gap-2 bg-red-500 px-6 py-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-red-600 sm:w-auto"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    DELETE RESOURCE
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -187,7 +204,7 @@ export default function ResourceDetails() {
                                 <span className="block text-[10px] font-bold uppercase text-black/60">
                                     STATUS
                                 </span>
-                                <span className="mt-2 block w-fit border border-black/10 bg-[#dfed2b] px-2 py-1 text-sm font-black uppercase text-black">
+                                <span className="mt-2 block w-fit border border-black/10 bg-[#d4e157] px-2 py-1 text-sm font-black uppercase text-black">
                                     {resource.status}
                                 </span>
                             </div>
@@ -351,6 +368,66 @@ export default function ResourceDetails() {
                         </div>
                     </div>
 
+                    {resource.blueprint_name && (
+                        <div className="eco-nexus-glass-card relative overflow-hidden p-6 shadow-xl md:p-8">
+                            <div className="absolute right-0 top-0 bg-[#d4e157] px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black shadow-sm">
+                                ATTACHMENT
+                            </div>
+                            <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">
+                                // SYSTEM BLUEPRINTS
+                            </span>
+                            <h2 className="mb-4 font-['Montserrat'] text-2xl font-black uppercase tracking-tighter text-black">
+                                SCHEMATIC FILE
+                            </h2>
+                            <div className="flex flex-col gap-4 border border-black/10 bg-white/40 p-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-black text-[#d4e157] shadow-sm font-black text-sm uppercase">
+                                        {resource.blueprint_name.split('.').pop().substring(0, 3).toUpperCase()}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <span className="block truncate font-['Montserrat'] text-xs font-black uppercase text-black">
+                                            {resource.blueprint_name}
+                                        </span>
+                                        <span className="block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">
+                                            Schematic Verified
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        const fileContent = `========================================================================
+BLUEPRINT EXPORT: ${resource.blueprint_name.toUpperCase()}
+========================================================================
+Linked Asset:     ${resource.title.toUpperCase()}
+Resource Type:    ${resource.type.toUpperCase()}
+Capacity Rating:  ${resource.capacity} MW
+Geocoordinates:   [${resource.latitude}, ${resource.longitude}]
+System Accuracies: Verified Operator Log
+
+------------------------------------------------------------------------
+This file serves as the official schematic manifest. Physical hardware
+layout profiles are stored inside the encrypted grid vaults.
+========================================================================
+`;
+                                        const blob = new Blob([fileContent], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = resource.blueprint_name;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    className="flex w-full items-center justify-center gap-2 bg-black py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-[#d4e157] hover:bg-[#d4e157] hover:text-black transition-colors"
+                                >
+                                    DOWNLOAD BLUEPRINT
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {resource.group && (
                         <div className="eco-nexus-glass-card relative overflow-hidden p-6 shadow-xl md:p-8">
                             <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-white">
@@ -364,7 +441,7 @@ export default function ResourceDetails() {
                             </h2>
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-black p-4 text-[#dfed2b]">
+                                    <div className="bg-black p-4 text-[#d4e157]">
                                         <Users className="h-6 w-6 animate-pulse" />
                                     </div>
                                     <div>
@@ -378,7 +455,7 @@ export default function ResourceDetails() {
                                 </div>
                                 <Link
                                     to={`/groups/${resource.group.id}`}
-                                    className="flex w-full items-center justify-center gap-2 bg-black py-4 text-center font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                    className="flex w-full items-center justify-center gap-2 bg-black py-4 text-center font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black"
                                 >
                                     VIEW GROUP DETAILS{' '}
                                     <Compass className="h-4 w-4" />
@@ -388,8 +465,8 @@ export default function ResourceDetails() {
                     )}
 
                     {resource.energy_insight && (
-                        <div className="eco-nexus-glass-card relative overflow-hidden bg-[#dfed2b]/20 p-6 shadow-xl md:p-8">
-                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                        <div className="eco-nexus-glass-card relative overflow-hidden bg-[#d4e157]/20 p-6 shadow-xl md:p-8">
+                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                                 INSIGHT
                             </div>
                             <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
@@ -414,7 +491,7 @@ export default function ResourceDetails() {
                                     <span className="uppercase text-black/60">
                                         EFFICIENCY INDEX:
                                     </span>
-                                    <span className="flex items-center gap-2 bg-black px-2 py-1 font-black uppercase text-[#dfed2b]">
+                                    <span className="flex items-center gap-2 bg-black px-2 py-1 font-black uppercase text-[#d4e157]">
                                         <ShieldCheck className="h-3 w-3" />
                                         {
                                             resource.energy_insight

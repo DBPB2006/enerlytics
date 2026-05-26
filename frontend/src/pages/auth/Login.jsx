@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -91,7 +91,7 @@ export default function Login() {
             {/* 1. Left Illustrative Pane */}
             <div className="relative hidden flex-col justify-center pr-12 lg:flex lg:w-[45%]">
                 <div className="relative z-10 space-y-4">
-                    <div className="inline-block bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black">
+                    <div className="inline-block bg-[#d4e157] px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black">
                         AUTHENTICATION PROTOCOL
                     </div>
                     <h1 className="font-['Montserrat'] text-6xl font-black uppercase leading-none tracking-tighter">
@@ -137,7 +137,7 @@ export default function Login() {
 
                         <form onSubmit={handleLogin} className="space-y-6">
                             {displayError && (
-                                <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                                <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                     <ShieldAlert className="h-4 w-4 shrink-0" />
                                     <span>{displayError}</span>
                                 </div>
@@ -198,7 +198,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
+                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black disabled:opacity-50"
                             >
                                 {loading ? 'SIGNING IN...' : 'SIGN IN'}
                             </button>
@@ -234,7 +234,7 @@ export default function Login() {
                                 New User?{' '}
                                 <Link
                                     to="/signup"
-                                    className="px-1 font-black text-black underline transition-colors hover:bg-black hover:text-[#dfed2b]"
+                                    className="px-1 font-black text-black underline transition-colors hover:bg-black hover:text-[#d4e157]"
                                 >
                                     Sign Up
                                 </Link>

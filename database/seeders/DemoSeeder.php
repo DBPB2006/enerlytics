@@ -57,6 +57,17 @@ class DemoSeeder extends Seeder
             ]
         );
 
+        $neha = User::firstOrCreate(
+            ['email' => 'provider2@example.com'],
+            [
+                'name' => 'Energy Provider Two',
+                'password' => bcrypt('password'),
+                'role' => 'energy_provider',
+                'unique_id' => 'EP-739105',
+                'is_validated' => true,
+            ]
+        );
+
         // 2. Create Mock Groups (Communities) in India
         $group1 = Group::firstOrCreate(
             ['name' => 'Karnataka Solar & Wind Cooperative'],
@@ -163,6 +174,21 @@ class DemoSeeder extends Seeder
                 'created_by' => $testUser->id,
             ],
             [
+                'title' => 'Thar Desert Solar Complex',
+                'type' => 'solar',
+                'latitude' => 26.91,
+                'longitude' => 70.90,
+                'location_name' => 'Jaisalmer, Rajasthan',
+                'region' => 'Rajasthan',
+                'capacity' => 120.0,
+                'status' => 'active',
+                'accuracy' => 'verified',
+                'efficiency' => 0.88,
+                'panel_area' => 85000,
+                'group_id' => $group1->id,
+                'created_by' => $rajesh->id,
+            ],
+            [
                 'title' => 'Hebbal Rooftop Solar Cluster',
                 'type' => 'solar',
                 'latitude' => 13.04,
@@ -190,6 +216,21 @@ class DemoSeeder extends Seeder
                 'accuracy' => 'verified',
                 'efficiency' => 0.45,
                 'rotor_area' => 25000,
+                'group_id' => $group2->id,
+                'created_by' => $rajesh->id,
+            ],
+            [
+                'title' => 'Kutch Peninsula Wind Park',
+                'type' => 'wind',
+                'latitude' => 23.25,
+                'longitude' => 69.66,
+                'location_name' => 'Kutch, Gujarat',
+                'region' => 'Gujarat',
+                'capacity' => 85.5,
+                'status' => 'active',
+                'accuracy' => 'verified',
+                'efficiency' => 0.46,
+                'rotor_area' => 45000,
                 'group_id' => $group2->id,
                 'created_by' => $rajesh->id,
             ],

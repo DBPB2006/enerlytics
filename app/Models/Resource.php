@@ -11,6 +11,7 @@ class Resource extends Model
         'group_id',
         'title',
         'description',
+        'blueprint_name',
         'type',
         'latitude',
         'longitude',

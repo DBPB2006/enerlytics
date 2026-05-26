@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
     Cpu,
     AlertTriangle,
@@ -24,20 +24,19 @@ const staggerContainer = {
 };
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 8 },
     show: {
         opacity: 1,
         y: 0,
-        transition: { type: 'spring', stiffness: 100, damping: 20 },
+        transition: { type: 'spring', stiffness: 250, damping: 25 },
     },
 };
 
 const scaleIn = {
-    hidden: { opacity: 0, scale: 0.9 },
+    hidden: { opacity: 0 },
     show: {
         opacity: 1,
-        scale: 1,
-        transition: { type: 'spring', stiffness: 100, damping: 20 },
+        transition: { duration: 0.15, ease: 'easeOut' },
     },
 };
 
@@ -52,7 +51,7 @@ export default function Analytics() {
                 setError('');
                 const response = await api.get('/analytics');
                 setData(response.data);
-            } catch (err) {
+            } catch {
                 setError('Failed to retrieve energy analytics.');
             } finally {
                 setLoading(false);
@@ -182,7 +181,7 @@ export default function Analytics() {
                             'hover-glow-wind',
                             'hover-glow-solar',
                         ];
-                        const slideColors = ['#dfed2b', '#A2E3E3', '#dfed2b'];
+                        const slideColors = ['#d4e157', '#A2E3E3', '#d4e157'];
                         return (
                             <motion.div
                                 key={i}
@@ -262,7 +261,7 @@ export default function Analytics() {
                                                 : 0;
 
                                         const accentColors = {
-                                            solar: '#dfed2b',
+                                            solar: '#d4e157',
                                             wind: '#A2E3E3',
                                             hydro: '#9FD3FF',
                                             biomass: '#C3EAA6',
@@ -270,7 +269,7 @@ export default function Analytics() {
                                         };
                                         const trueColor =
                                             accentColors[key.toLowerCase()] ||
-                                            '#dfed2b';
+                                            '#d4e157';
                                         const glowClass = `hover-glow-${key.toLowerCase()}`;
 
                                         return (
@@ -278,9 +277,9 @@ export default function Analytics() {
                                                 key={key}
                                                 className={`group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 shadow-sm transition-all duration-300 hover:bg-white ${glowClass}`}
                                             >
-                                                {/* Slide-in vibrant background overlay */}
+                                                {/* Static opacity background overlay on hover (no motion) */}
                                                 <div
-                                                    className="absolute inset-0 z-0 -translate-x-full bg-black/5 transition-transform duration-500 ease-out group-hover:translate-x-0"
+                                                    className="absolute inset-0 z-0 bg-black/5 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                                                     style={{
                                                         backgroundColor: `${trueColor}20`,
                                                     }}
@@ -331,20 +330,10 @@ export default function Analytics() {
                                                     </div>
 
                                                     <div className="relative h-4 w-full overflow-hidden border border-black/10 bg-black/10">
-                                                        <motion.div
-                                                            initial={{
-                                                                width: 0,
-                                                            }}
-                                                            animate={{
-                                                                width: `${percentage}%`,
-                                                            }}
-                                                            transition={{
-                                                                duration: 1,
-                                                                ease: 'easeOut',
-                                                                delay: 0.5,
-                                                            }}
+                                                        <div
                                                             className="h-full transition-colors"
                                                             style={{
+                                                                width: `${percentage}%`,
                                                                 backgroundColor:
                                                                     trueColor,
                                                             }}
@@ -365,7 +354,7 @@ export default function Analytics() {
                         className="flex flex-col gap-8 lg:col-span-8"
                     >
                         <div className="eco-nexus-glass-card relative overflow-hidden bg-white/60 p-6 shadow-xl md:p-10">
-                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b] shadow-md">
+                            <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157] shadow-md">
                                 METRICS
                             </div>
                             <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">

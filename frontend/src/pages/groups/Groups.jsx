@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,13 +30,13 @@ export default function Groups() {
     const [modalFieldErrors, setModalFieldErrors] = useState({ name: '', location: '', description: '' });
     const [modalLoading, setModalLoading] = useState(false);
 
-    const fetchGroups = async () => {
+    const fetchGroups = useCallback(async () => {
         try {
-            setError('');
             const [joinedRes, discoverRes] = await Promise.all([
                 api.get('/groups'),
                 api.get('/groups/discover'),
             ]);
+            setError('');
             setJoinedGroups(joinedRes.data);
             setDiscoverGroups(discoverRes.data);
 
@@ -48,16 +48,17 @@ export default function Groups() {
                 navigate('/mfa/setup');
                 return;
             }
-        } catch (err) {
+        } catch {
             setError('Failed to fetch community cooperatives directory.');
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchGroups();
-    }, []);
+    }, [fetchGroups]);
 
     const handleJoinRequest = async (groupId) => {
         try {
@@ -67,7 +68,7 @@ export default function Groups() {
                     particleCount: 80,
                     spread: 60,
                     origin: { y: 0.8 },
-                    colors: ['#dfed2b', '#ffffff', '#000000'],
+                    colors: ['#d4e157', '#ffffff', '#000000'],
                 });
                 fetchGroups();
             }
@@ -133,7 +134,7 @@ export default function Groups() {
                 confetti({
                     particleCount: 150,
                     spread: 80,
-                    colors: ['#dfed2b', '#ffffff', '#000000'],
+                    colors: ['#d4e157', '#ffffff', '#000000'],
                 });
                 setName('');
                 setDescription('');
@@ -168,7 +169,7 @@ export default function Groups() {
             <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-12">
                 <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                        <div className="inline-flex items-center gap-2 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                             <Globe className="h-3 w-3" /> REGIONAL ENERGY GROUPS
                         </div>
                         <h1 className="font-['Montserrat'] text-5xl font-black uppercase leading-none tracking-tighter text-black md:text-6xl">
@@ -186,7 +187,7 @@ export default function Groups() {
                             setModalError('');
                             setModalFieldErrors({ name: '', location: '', description: '' });
                         }}
-                        className="flex items-center justify-center gap-2 self-start border border-black/10 bg-[#dfed2b] px-6 py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white sm:self-auto"
+                        className="flex items-center justify-center gap-2 self-start border border-black/10 bg-[#d4e157] px-6 py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white sm:self-auto"
                     >
                         <Plus className="h-4 w-4" />
                         Create Group
@@ -194,7 +195,7 @@ export default function Groups() {
                 </div>
 
                 {error && (
-                    <div className="mb-8 flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#dfed2b]">
+                    <div className="mb-8 flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                         <ShieldAlert className="h-4 w-4 shrink-0" />
                         <span>{error}</span>
                     </div>
@@ -238,7 +239,7 @@ export default function Groups() {
                                                 key={g.id}
                                                 className="hover-glow-solar hover-slide-chevron group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-6 shadow-md transition-all duration-300"
                                             >
-                                                <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/15 transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                                <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/15 transition-transform duration-500 ease-out group-hover:translate-x-0" />
 
                                                 <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between">
                                                     <div className="mb-4 flex items-start justify-between">
@@ -253,7 +254,7 @@ export default function Groups() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="border border-black/10 bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[9px] font-black uppercase tracking-widest text-black">
+                                                        <span className="border border-black/10 bg-[#d4e157] px-3 py-1 font-['Montserrat'] text-[9px] font-black uppercase tracking-widest text-black">
                                                             ACTIVE
                                                         </span>
                                                     </div>
@@ -265,7 +266,7 @@ export default function Groups() {
                                                     <div className="pointer-events-auto relative z-20">
                                                         <Link
                                                             to={`/groups/${g.id}`}
-                                                            className="flex w-full items-center justify-center gap-2 bg-black py-3 text-center font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#dfed2b] hover:text-black"
+                                                            className="flex w-full items-center justify-center gap-2 bg-black py-3 text-center font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#d4e157] hover:text-black"
                                                         >
                                                             <Compass className="h-4 w-4 transition-transform duration-500 group-hover:rotate-45" />{' '}
                                                             VIEW GROUP DETAILS
@@ -281,8 +282,8 @@ export default function Groups() {
 
                         {/* 2. Discover Groups */}
                         <div className="space-y-6">
-                            <div className="eco-nexus-glass-card relative overflow-hidden bg-[#dfed2b]/20 p-6 shadow-xl md:p-8">
-                                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                            <div className="eco-nexus-glass-card relative overflow-hidden bg-[#d4e157]/20 p-6 shadow-xl md:p-8">
+                                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                                     DISCOVER
                                 </div>
                                 <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
@@ -363,7 +364,7 @@ export default function Groups() {
                                 className="relative z-10 w-full max-w-md"
                             >
                                 <div className="eco-nexus-glass-card relative overflow-hidden bg-white p-6 shadow-2xl md:p-8">
-                                    <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                                    <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                                         CREATE
                                     </div>
 
@@ -472,7 +473,7 @@ export default function Groups() {
                                             <button
                                                 type="submit"
                                                 disabled={modalLoading}
-                                                className="bg-black px-6 py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
+                                                className="bg-black px-6 py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black disabled:opacity-50"
                                             >
                                                 {modalLoading
                                                     ? 'CREATING...'

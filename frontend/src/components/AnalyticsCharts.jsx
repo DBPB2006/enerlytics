@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
     LineChart,
     Line,
@@ -82,7 +82,7 @@ const AnalyticsCharts = ({ resource, metrics = [] }) => {
                 transition={{ duration: 0.8 }}
                 className="eco-nexus-glass-card relative overflow-hidden p-6 md:p-8"
             >
-                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                     METRICS // CHART-1
                 </div>
 
@@ -273,7 +273,7 @@ const AnalyticsCharts = ({ resource, metrics = [] }) => {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="eco-nexus-glass-card relative overflow-hidden border-l-4 border-l-black p-6 md:p-8"
             >
-                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b]">
+                <div className="absolute right-0 top-0 bg-black px-4 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157]">
                     METRICS // CHART-3
                 </div>
                 <span className="mb-2 mt-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">

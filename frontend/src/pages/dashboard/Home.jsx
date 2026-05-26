@@ -1,17 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import {
     Cpu,
-    Aperture,
-    Layers,
-    Database,
-    Flame,
-    Globe,
     ArrowRight,
-    ArrowUpRight,
-    MessageSquare,
 } from 'lucide-react';
 import api from '../../utils/api';
 
@@ -25,29 +18,28 @@ const staggerContainer = {
 };
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 12 },
+    hidden: { opacity: 0, y: 4 },
     show: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.3, ease: 'easeOut' },
     },
 };
 
 const fadeRight = {
-    hidden: { opacity: 0, x: -12 },
+    hidden: { opacity: 0, x: -4 },
     show: {
         opacity: 1,
         x: 0,
-        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.3, ease: 'easeOut' },
     },
 };
 
 const scaleUp = {
-    hidden: { opacity: 0, scale: 0.98 },
+    hidden: { opacity: 0 },
     show: {
         opacity: 1,
-        scale: 1,
-        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.25, ease: 'easeOut' },
     },
 };
 
@@ -96,7 +88,8 @@ export default function Home() {
                         setMapNodes(nodes);
                     }
                 }
-            } catch (err) {
+            } catch {
+                // Silently handle error for clean production logs
             } finally {
                 setLoading(false);
             }
@@ -122,7 +115,7 @@ export default function Home() {
                     >
                         <motion.div
                             variants={fadeRight}
-                            className="inline-flex items-center gap-2 bg-black px-4 py-1.5 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b] shadow-2xl"
+                            className="inline-flex items-center gap-2 bg-black px-4 py-1.5 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157] shadow-2xl"
                         >
                             <Cpu className="h-3 w-3" /> COMMUNITY CLEAN ENERGY
                         </motion.div>
@@ -162,7 +155,7 @@ export default function Home() {
                         >
                             <Link to="/resources">
                                 <button
-                                    className="leaf-shape-sm group flex items-center justify-center gap-3 border border-black bg-black px-8 py-5 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-[#dfed2b] shadow-2xl transition-all duration-500 hover:bg-transparent hover:text-black hover:backdrop-blur-md"
+                                    className="leaf-shape-sm group flex items-center justify-center gap-3 border border-black bg-black px-8 py-5 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-[#d4e157] shadow-2xl transition-all duration-500 hover:bg-transparent hover:text-black hover:backdrop-blur-md"
                                 >
                                     EXPLORE RESOURCES{' '}
                                     <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-2" />
@@ -198,7 +191,7 @@ export default function Home() {
                             }}
                             className="leaf-shape-lg relative z-10 w-full max-w-sm border border-black/10 bg-white/20 p-8 shadow-2xl backdrop-blur-xl"
                         >
-                            <div className="absolute -right-3 -top-3 bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[8px] font-bold uppercase tracking-widest text-black shadow-md">
+                            <div className="absolute -right-3 -top-3 bg-[#d4e157] px-3 py-1 font-['Montserrat'] text-[8px] font-bold uppercase tracking-widest text-black shadow-md">
                                 ENERGY TRACKING
                             </div>
  
@@ -210,7 +203,7 @@ export default function Home() {
                                         repeat: Infinity,
                                         ease: 'linear',
                                     }}
-                                    className="leaf-shape-sm flex h-12 w-12 items-center justify-center bg-black text-[#dfed2b]"
+                                    className="leaf-shape-sm flex h-12 w-12 items-center justify-center bg-black text-[#d4e157]"
                                 >
                                     <svg
                                         viewBox="0 0 24 24"
@@ -224,7 +217,7 @@ export default function Home() {
                                             cy="12"
                                             r="10"
                                             stroke="currentColor"
-                                            fill="rgba(223, 237, 43, 0.2)"
+                                            fill="rgba(212, 225, 87, 0.2)"
                                         />
                                         <circle
                                             cx="12"
@@ -256,7 +249,7 @@ export default function Home() {
                                 <div
                                     className="group relative flex cursor-pointer items-center justify-between overflow-hidden border border-black/5 bg-white/40 p-4 shadow-inner"
                                 >
-                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/20 transition-transform duration-300 group-hover:translate-x-0" />
+                                    <div className="absolute inset-0 z-0 -translate-x-full bg-[#d4e157]/20 transition-transform duration-300 group-hover:translate-x-0" />
                                     <span className="relative z-10 text-black/60 transition-colors group-hover:text-black">
                                         SOLAR FEED
                                     </span>
@@ -292,13 +285,13 @@ export default function Home() {
                 >
                     <motion.div
                         variants={fadeUp}
-                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#dfed2b]/40"
+                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#d4e157]/40"
                     >
                         <div className="relative z-10 space-y-4">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 ACTIVE CLEAN OUTPUT
                             </span>
-                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] md:text-7xl">
+                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#d4e157] md:text-7xl">
                                 {loading
                                     ? '0.0'
                                     : metrics.total_output.toFixed(1)}{' '}
@@ -328,13 +321,13 @@ export default function Home() {
 
                     <motion.div
                         variants={fadeUp}
-                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#dfed2b]/40"
+                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#d4e157]/40"
                     >
                         <div className="relative z-10 space-y-4">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 AVG CELL EFFICIENCY
                             </span>
-                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] md:text-7xl">
+                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#d4e157] md:text-7xl">
                                 {metrics.average_efficiency}
                             </div>
                         </div>
@@ -351,7 +344,7 @@ export default function Home() {
                     variants={scaleUp}
                     className="eco-nexus-glass-card relative overflow-hidden border border-black/5 bg-white/60 p-0 shadow-2xl backdrop-blur-2xl"
                 >
-                    <div className="absolute right-6 top-6 z-20 bg-black px-4 py-1.5 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#dfed2b] shadow-xl">
+                    <div className="absolute right-6 top-6 z-20 bg-black px-4 py-1.5 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-[#d4e157] shadow-xl">
                         MAP-V1
                     </div>
 
@@ -403,7 +396,7 @@ export default function Home() {
                                     <div
                                         className="relative h-4 w-4 rounded-full bg-black shadow-lg"
                                     >
-                                        <span className="absolute inset-0 animate-ping rounded-full bg-[#dfed2b] opacity-50" />
+                                        <span className="absolute inset-0 animate-ping rounded-full bg-[#d4e157] opacity-50" />
                                     </div>
                                 </div>
                             ))}
@@ -423,7 +416,7 @@ export default function Home() {
                                         <h4 className="mb-4 border-b border-white/20 pb-4 text-sm leading-tight">
                                             {hoveredNode.label}
                                         </h4>
-                                        <div className="flex items-end justify-between text-[#dfed2b]">
+                                        <div className="flex items-end justify-between text-[#d4e157]">
                                             <span className="text-[9px] opacity-70">
                                                 LIVE OUTPUT
                                             </span>
@@ -454,7 +447,7 @@ export default function Home() {
                     <div className="relative z-10 mx-auto max-w-4xl space-y-12">
                         <h2 className="font-['Montserrat'] text-5xl font-black uppercase leading-[0.9] tracking-tighter text-white md:text-8xl">
                             READY TO CLAIM <br />{' '}
-                            <span className="text-[#dfed2b]">
+                            <span className="text-[#d4e157]">
                                 GRID INDEPENDENCE?
                             </span>
                         </h2>
@@ -467,7 +460,7 @@ export default function Home() {
                             {user ? (
                                 <Link to="/resources" className="relative z-20">
                                     <button
-                                        className="bg-[#dfed2b] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
+                                        className="bg-[#d4e157] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
                                     >
                                         GO TO MAP
                                     </button>
@@ -475,7 +468,7 @@ export default function Home() {
                             ) : (
                                 <Link to="/signup" className="relative z-20">
                                     <button
-                                        className="bg-[#dfed2b] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
+                                        className="bg-[#d4e157] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
                                     >
                                         SIGN UP
                                     </button>
