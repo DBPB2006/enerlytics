@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 
-// Cinematic Animation Variants
 const staggerContainer = {
     hidden: { opacity: 0 },
     show: {
@@ -78,7 +77,6 @@ export default function Categories() {
     return (
         <>
             <div className="relative z-10 flex min-h-screen w-full flex-col overflow-hidden px-6 pb-32 md:px-12">
-                {/* Cinematic Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -94,7 +92,6 @@ export default function Categories() {
                     </h1>
                 </motion.div>
 
-                {/* Cinematic Floating Grid: Categories */}
                 <main className="flex flex-grow items-start justify-center py-6">
                     <motion.div
                         variants={staggerContainer}
@@ -133,7 +130,6 @@ export default function Categories() {
                                     variants={fadeUp}
                                     className="group relative h-[600px] cursor-pointer overflow-hidden border border-black/20 bg-black shadow-2xl"
                                 >
-                                    {/* Full Bleed Image with Grayscale to Color reveal */}
                                     <div className="absolute inset-0 h-full w-full">
                                         <img
                                             src={cat.image}
@@ -142,10 +138,8 @@ export default function Categories() {
                                         />
                                     </div>
 
-                                    {/* Deep Cinematic Overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 transition-opacity duration-1000 group-hover:opacity-70" />
 
-                                    {/* Top Number Indicator */}
                                     <div className="absolute left-6 top-6 z-10 flex w-[calc(100%-3rem)] items-start justify-between text-white mix-blend-difference">
                                         <div className="font-['Montserrat'] text-xs font-bold tracking-widest text-white/60">
                                             {cat.number}
@@ -161,7 +155,6 @@ export default function Categories() {
                                         />
                                     </div>
 
-                                    {/* Bottom Content Area */}
                                     <div className="absolute bottom-0 left-0 z-10 flex h-full w-full flex-col justify-end p-8 text-white">
                                         <div className="translate-y-8 transform transition-transform duration-700 ease-out group-hover:translate-y-0">
                                             <h3 className="mb-4 font-['Montserrat'] text-5xl font-black uppercase leading-none tracking-tighter text-white transition-colors duration-700 group-hover:text-[#dfed2b]">
@@ -217,7 +210,6 @@ export default function Categories() {
                 Enerlytics Insights
             </motion.div>
 
-            {/* Watermark Layer */}
             <div className="pointer-events-none fixed inset-0 z-0 flex flex-col items-center justify-center overflow-hidden opacity-10 mix-blend-overlay">
                 <motion.div
                     initial={{ opacity: 0, y: 100 }}

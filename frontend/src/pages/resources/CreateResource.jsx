@@ -12,12 +12,11 @@ import {
     Droplet,
     Flame,
     Globe,
-    Tags,
     Check,
     Trash2,
     Loader2,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 import L from 'leaflet';
 import {
     MapContainer,
@@ -28,6 +27,7 @@ import {
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Search as SearchIcon } from 'lucide-react';
+
 // Helper map hook to update map center dynamically when user searches or manual edits coordinates
 function MapFocusController({ lat, lng }) {
     const map = useMap();
@@ -43,13 +43,15 @@ function MapFocusController({ lat, lng }) {
 }
 
 // Handle map click events to place coordinates directly
-function MapEventsHandler({ setLat, setLng, setLocName, setRegName }) {
+function MapEventsHandler({ setLat, setLng, setLocName, setRegName, clearErr }) {
     useMapEvents({
         click(e) {
             const clickedLat = e.latlng.lat.toFixed(6);
             const clickedLng = e.latlng.lng.toFixed(6);
             setLat(clickedLat);
             setLng(clickedLng);
+            clearErr('latitude');
+            clearErr('longitude');
 
             // Reverse-geocoding to resolve address details beautifully
             fetch(
@@ -70,6 +72,8 @@ function MapEventsHandler({ setLat, setLng, setLocName, setRegName }) {
                         setRegName(
                             state ? `${state}, ${country}` : country,
                         );
+                        clearErr('locationName');
+                        clearErr('region');
                     }
                 })
                 .catch(() => {});
@@ -122,6 +126,7 @@ export default function CreateResource() {
 
     const [preview, setPreview] = useState(null);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [submitLoading, setSubmitLoading] = useState(false);
 
     useEffect(() => {
@@ -131,9 +136,9 @@ export default function CreateResource() {
                 setGroups(response.data);
             } catch (err) {
                 setGroups([
-                    { id: 1, name: 'Pacific Northwest Wind Circle' },
-                    { id: 2, name: 'Eastside Solar Assembly' },
-                    { id: 3, name: 'Valley Gravity Hydro Co-op' },
+                    { id: 1, name: 'Karnataka Wind Cooperative' },
+                    { id: 2, name: 'Bangalore Solar Assembly' },
+                    { id: 3, name: 'Kerala Hydro Federation' },
                 ]);
             } finally {
                 setLoadingGroups(false);
@@ -258,9 +263,138 @@ export default function CreateResource() {
         }
     };
 
+    const clearErr = (field) => {
+        if (fieldErrors[field]) {
+            setFieldErrors(prev => ({ ...prev, [field]: '' }));
+        }
+    };
+
+    const validateStep1 = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!title.trim()) {
+            errors.title = 'Resource title is required.';
+            isValid = false;
+        } else if (title.trim().length < 3) {
+            errors.title = 'Title must be at least 3 characters.';
+            isValid = false;
+        }
+
+        const cap = parseFloat(capacity);
+        if (isNaN(cap) || cap <= 0) {
+            errors.capacity = 'Capacity rating must be a positive number greater than 0.';
+            isValid = false;
+        }
+
+        if (!region.trim()) {
+            errors.region = 'Region/Sub division is required.';
+            isValid = false;
+        }
+
+        const lat = parseFloat(latitude);
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+            errors.latitude = 'Latitude must be a valid number between -90 and 90.';
+            isValid = false;
+        }
+
+        const lng = parseFloat(longitude);
+        if (isNaN(lng) || lng < -180 || lng > 180) {
+            errors.longitude = 'Longitude must be a valid number between -180 and 180.';
+            isValid = false;
+        }
+
+        if (!locationName.trim()) {
+            errors.locationName = 'City/Location Area is required.';
+            isValid = false;
+        }
+
+        setFieldErrors(errors);
+        return isValid;
+    };
+
+    const validateStep2 = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (type === 'solar') {
+            if (irradiance !== '') {
+                const irr = parseFloat(irradiance);
+                if (isNaN(irr) || irr <= 0) {
+                    errors.irradiance = 'Solar Irradiance must be greater than 0.';
+                    isValid = false;
+                }
+            }
+            if (panelArea !== '') {
+                const area = parseFloat(panelArea);
+                if (isNaN(area) || area <= 0) {
+                    errors.panelArea = 'Surface Area must be greater than 0.';
+                    isValid = false;
+                }
+            }
+            if (cellEfficiency !== '') {
+                const eff = parseFloat(cellEfficiency);
+                if (isNaN(eff) || eff < 0 || eff > 1) {
+                    errors.cellEfficiency = 'Efficiency rating must be between 0.00 and 1.00 (e.g. 0.18).';
+                    isValid = false;
+                }
+            }
+        } else if (type === 'wind') {
+            if (windSpeed !== '') {
+                const ws = parseFloat(windSpeed);
+                if (isNaN(ws) || ws <= 0) {
+                    errors.windSpeed = 'Wind speed must be greater than 0.';
+                    isValid = false;
+                }
+            }
+            if (rotorSweptArea !== '') {
+                const ra = parseFloat(rotorSweptArea);
+                if (isNaN(ra) || ra <= 0) {
+                    errors.rotorSweptArea = 'Rotor swept area must be greater than 0.';
+                    isValid = false;
+                }
+            }
+        } else if (type === 'hydro') {
+            if (flowRate !== '') {
+                const fr = parseFloat(flowRate);
+                if (isNaN(fr) || fr <= 0) {
+                    errors.flowRate = 'Gravity flow rate must be greater than 0.';
+                    isValid = false;
+                }
+            }
+            if (head !== '') {
+                const hd = parseFloat(head);
+                if (isNaN(hd) || hd <= 0) {
+                    errors.head = 'Hydraulic head height must be greater than 0.';
+                    isValid = false;
+                }
+            }
+        }
+
+        setFieldErrors(errors);
+        return isValid;
+    };
+
+    const handleContinueToStep2 = () => {
+        if (validateStep1()) {
+            setStep(2);
+        }
+    };
+
+    const handleContinueToStep3 = () => {
+        if (validateStep2()) {
+            setStep(3);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!validateStep1() || !validateStep2()) {
+            return;
+        }
+
         setSubmitLoading(true);
 
         const payload = {
@@ -274,13 +408,9 @@ export default function CreateResource() {
             region,
             status: status === 'offline' ? 'inactive' : status,
             group_id: groupId ? parseInt(groupId) : null,
-
-            // Match backend required validation rules
             accuracy: 'verified',
             efficiency:
                 type === 'solar' ? parseFloat(cellEfficiency) || 0.18 : 0.35,
-
-            // Match backend expected field names
             panel_area:
                 type === 'solar' && panelArea ? parseFloat(panelArea) : null,
             rotor_area:
@@ -290,8 +420,6 @@ export default function CreateResource() {
             flow_rate:
                 type === 'hydro' && flowRate ? parseFloat(flowRate) : null,
             head: type === 'hydro' && head ? parseFloat(head) : null,
-
-            // Add environmental override fields
             irradiance:
                 type === 'solar' && irradiance ? parseFloat(irradiance) : null,
             wind_speed:
@@ -336,8 +464,9 @@ export default function CreateResource() {
                 const resLng = parseFloat(result.lon).toFixed(6);
                 setLatitude(resLat);
                 setLongitude(resLng);
+                clearErr('latitude');
+                clearErr('longitude');
 
-                // Split displays cleanly
                 const displayNameParts = result.display_name.split(',');
                 const titlePart = displayNameParts[0] || 'Selected Node';
                 const regionParts = displayNameParts
@@ -346,6 +475,8 @@ export default function CreateResource() {
                     .join(', ');
                 setLocationName(titlePart);
                 setRegion(regionParts || 'India');
+                clearErr('locationName');
+                clearErr('region');
             } else {
                 alert(
                     'Location not found. Please try a different query or select manually on the map.',
@@ -395,7 +526,7 @@ export default function CreateResource() {
 
                 <div className="mb-8">
                     <span className="mb-2 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
-                        // ADD FEDERATION ASSET
+                        // ADD RENEWABLE ASSET
                     </span>
                     <h1 className="outline-text font-['Montserrat'] text-5xl font-black uppercase tracking-tighter text-black">
                         {isEditMode
@@ -408,14 +539,19 @@ export default function CreateResource() {
                     {[1, 2, 3].map((s) => (
                         <button
                             key={s}
-                            onClick={() => step > s && setStep(s)}
+                            type="button"
+                            onClick={() => {
+                                if (s === 1) setStep(1);
+                                else if (s === 2 && validateStep1()) setStep(2);
+                                else if (s === 3 && validateStep1() && validateStep2()) setStep(3);
+                            }}
                             className={`flex cursor-pointer items-center gap-3 text-[10px] font-bold uppercase tracking-widest ${
                                 step === s
                                     ? 'text-black'
                                     : step > s
                                       ? 'text-black/80 hover:text-black'
                                       : 'text-black/40'
-                            }`}
+                             }`}
                         >
                             <span
                                 className={`flex h-8 w-8 items-center justify-center text-xs ${
@@ -490,9 +626,10 @@ export default function CreateResource() {
                                                         <button
                                                             key={cat.id}
                                                             type="button"
-                                                            onClick={() =>
-                                                                setType(cat.id)
-                                                            }
+                                                            onClick={() => {
+                                                                setType(cat.id);
+                                                                setFieldErrors({});
+                                                            }}
                                                             className={`flex cursor-pointer flex-col items-center gap-3 border p-4 text-center transition-colors ${
                                                                 isSelected
                                                                     ? 'border-black bg-black text-[#dfed2b]'
@@ -527,14 +664,17 @@ export default function CreateResource() {
                                             </label>
                                             <input
                                                 type="text"
-                                                required
-                                                placeholder="e.g. Cascadia Solar Array Circle"
+                                                placeholder="e.g. Bangalore Solar Array"
                                                 value={title}
-                                                onChange={(e) =>
-                                                    setTitle(e.target.value)
-                                                }
-                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                onChange={(e) => {
+                                                    setTitle(e.target.value);
+                                                    clearErr('title');
+                                                }}
+                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.title ? 'border-red-500' : 'border-black/10'}`}
                                             />
+                                            {fieldErrors.title && (
+                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.title}</span>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-6">
@@ -545,16 +685,17 @@ export default function CreateResource() {
                                                 <input
                                                     type="number"
                                                     step="0.1"
-                                                    required
                                                     placeholder="2.5"
                                                     value={capacity}
-                                                    onChange={(e) =>
-                                                        setCapacity(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                    onChange={(e) => {
+                                                        setCapacity(e.target.value);
+                                                        clearErr('capacity');
+                                                    }}
+                                                    className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.capacity ? 'border-red-500' : 'border-black/10'}`}
                                                 />
+                                                {fieldErrors.capacity && (
+                                                    <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.capacity}</span>
+                                                )}
                                             </div>
 
                                             <div className="space-y-2">
@@ -563,16 +704,17 @@ export default function CreateResource() {
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    required
-                                                    placeholder="e.g. Oregon, USA"
+                                                    placeholder="e.g. Karnataka, India"
                                                     value={region}
-                                                    onChange={(e) =>
-                                                        setRegion(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                    onChange={(e) => {
+                                                        setRegion(e.target.value);
+                                                        clearErr('region');
+                                                    }}
+                                                    className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.region ? 'border-red-500' : 'border-black/10'}`}
                                                 />
+                                                {fieldErrors.region && (
+                                                    <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.region}</span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -584,16 +726,17 @@ export default function CreateResource() {
                                                 <input
                                                     type="number"
                                                     step="0.000001"
-                                                    required
-                                                    placeholder="45.7512"
+                                                    placeholder="12.9716"
                                                     value={latitude}
-                                                    onChange={(e) =>
-                                                        setLatitude(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                    onChange={(e) => {
+                                                        setLatitude(e.target.value);
+                                                        clearErr('latitude');
+                                                    }}
+                                                    className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.latitude ? 'border-red-500' : 'border-black/10'}`}
                                                 />
+                                                {fieldErrors.latitude && (
+                                                    <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.latitude}</span>
+                                                )}
                                             </div>
 
                                             <div className="space-y-2">
@@ -603,16 +746,17 @@ export default function CreateResource() {
                                                 <input
                                                     type="number"
                                                     step="0.000001"
-                                                    required
-                                                    placeholder="-122.6512"
+                                                    placeholder="77.5946"
                                                     value={longitude}
-                                                    onChange={(e) =>
-                                                        setLongitude(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                    onChange={(e) => {
+                                                        setLongitude(e.target.value);
+                                                        clearErr('longitude');
+                                                    }}
+                                                    className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.longitude ? 'border-red-500' : 'border-black/10'}`}
                                                 />
+                                                {fieldErrors.longitude && (
+                                                    <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.longitude}</span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -622,22 +766,23 @@ export default function CreateResource() {
                                             </label>
                                             <input
                                                 type="text"
-                                                required
-                                                placeholder="e.g. Portland"
+                                                placeholder="e.g. Bangalore"
                                                 value={locationName}
-                                                onChange={(e) =>
-                                                    setLocationName(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                onChange={(e) => {
+                                                    setLocationName(e.target.value);
+                                                    clearErr('locationName');
+                                                }}
+                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.locationName ? 'border-red-500' : 'border-black/10'}`}
                                             />
+                                            {fieldErrors.locationName && (
+                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.locationName}</span>
+                                            )}
                                         </div>
 
                                         <div className="flex justify-end pt-6">
                                             <button
                                                 type="button"
-                                                onClick={() => setStep(2)}
+                                                onClick={handleContinueToStep2}
                                                 className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
                                             >
                                                 CONTINUE TO STEP 2
@@ -659,21 +804,21 @@ export default function CreateResource() {
                                                 {type === 'solar' && (
                                                     <div className="space-y-2">
                                                         <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                            Solar Irradiance
-                                                            (W/m²)
+                                                            Solar Irradiance (W/m²)
                                                         </label>
                                                         <input
                                                             type="number"
                                                             placeholder="250"
                                                             value={irradiance}
-                                                            onChange={(e) =>
-                                                                setIrradiance(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                            onChange={(e) => {
+                                                                setIrradiance(e.target.value);
+                                                                clearErr('irradiance');
+                                                            }}
+                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.irradiance ? 'border-red-500' : 'border-black/10'}`}
                                                         />
+                                                        {fieldErrors.irradiance && (
+                                                            <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.irradiance}</span>
+                                                        )}
                                                     </div>
                                                 )}
                                                 {type === 'wind' && (
@@ -685,33 +830,31 @@ export default function CreateResource() {
                                                             type="number"
                                                             placeholder="6.5"
                                                             value={windSpeed}
-                                                            onChange={(e) =>
-                                                                setWindSpeed(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                            onChange={(e) => {
+                                                                setWindSpeed(e.target.value);
+                                                                clearErr('windSpeed');
+                                                            }}
+                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.windSpeed ? 'border-red-500' : 'border-black/10'}`}
                                                         />
+                                                        {fieldErrors.windSpeed && (
+                                                            <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.windSpeed}</span>
+                                                        )}
                                                     </div>
                                                 )}
                                                 {type === 'hydro' && (
                                                     <div className="space-y-2">
                                                         <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                            River Flow Volume
-                                                            (m³/s)
+                                                            River Flow Volume (m³/s)
                                                         </label>
                                                         <input
                                                             type="number"
                                                             placeholder="12.0"
                                                             value={riverFlow}
-                                                            onChange={(e) =>
-                                                                setRiverFlow(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                            onChange={(e) => {
+                                                                setRiverFlow(e.target.value);
+                                                                clearErr('flowRate');
+                                                            }}
+                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.flowRate ? 'border-red-500' : 'border-black/10'}`}
                                                         />
                                                     </div>
                                                 )}
@@ -721,11 +864,7 @@ export default function CreateResource() {
                                                     </label>
                                                     <select
                                                         value={status}
-                                                        onChange={(e) =>
-                                                            setStatus(
-                                                                e.target.value,
-                                                            )
-                                                        }
+                                                        onChange={(e) => setStatus(e.target.value)}
                                                         className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors focus:bg-white/60 focus:outline-none"
                                                     >
                                                         <option value="active">
@@ -752,44 +891,40 @@ export default function CreateResource() {
                                                     <>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Panel Surface
-                                                                Area (m²)
+                                                                Panel Surface Area (m²)
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 placeholder="120"
-                                                                value={
-                                                                    panelArea
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setPanelArea(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                                value={panelArea}
+                                                                onChange={(e) => {
+                                                                    setPanelArea(e.target.value);
+                                                                    clearErr('panelArea');
+                                                                }}
+                                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.panelArea ? 'border-red-500' : 'border-black/10'}`}
                                                             />
+                                                            {fieldErrors.panelArea && (
+                                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.panelArea}</span>
+                                                            )}
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Cell Efficiency
-                                                                Rating
+                                                                Cell Efficiency Rating
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"
                                                                 placeholder="0.18"
-                                                                value={
-                                                                    cellEfficiency
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setCellEfficiency(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                                value={cellEfficiency}
+                                                                onChange={(e) => {
+                                                                    setCellEfficiency(e.target.value);
+                                                                    clearErr('cellEfficiency');
+                                                                }}
+                                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.cellEfficiency ? 'border-red-500' : 'border-black/10'}`}
                                                             />
+                                                            {fieldErrors.cellEfficiency && (
+                                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.cellEfficiency}</span>
+                                                            )}
                                                         </div>
                                                     </>
                                                 )}
@@ -797,41 +932,31 @@ export default function CreateResource() {
                                                     <>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Rotor Swept Area
-                                                                (m²)
+                                                                Rotor Swept Area (m²)
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 placeholder="4500"
-                                                                value={
-                                                                    rotorSweptArea
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setRotorSweptArea(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                                value={rotorSweptArea}
+                                                                onChange={(e) => {
+                                                                    setRotorSweptArea(e.target.value);
+                                                                    clearErr('rotorSweptArea');
+                                                                }}
+                                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.rotorSweptArea ? 'border-red-500' : 'border-black/10'}`}
                                                             />
+                                                            {fieldErrors.rotorSweptArea && (
+                                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.rotorSweptArea}</span>
+                                                            )}
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Turbine Model
-                                                                Reference
+                                                                Turbine Model Reference
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 placeholder="GE-2.5-120"
-                                                                value={
-                                                                    turbineModel
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setTurbineModel(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
+                                                                value={turbineModel}
+                                                                onChange={(e) => setTurbineModel(e.target.value)}
                                                                 className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
                                                             />
                                                         </div>
@@ -841,39 +966,39 @@ export default function CreateResource() {
                                                     <>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Gravity Flow
-                                                                Rate (m³/s)
+                                                                Gravity Flow Rate (m³/s)
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 placeholder="15.5"
                                                                 value={flowRate}
-                                                                onChange={(e) =>
-                                                                    setFlowRate(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                                onChange={(e) => {
+                                                                    setFlowRate(e.target.value);
+                                                                    clearErr('flowRate');
+                                                                }}
+                                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.flowRate ? 'border-red-500' : 'border-black/10'}`}
                                                             />
+                                                            {fieldErrors.flowRate && (
+                                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.flowRate}</span>
+                                                            )}
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                                Hydraulic Head
-                                                                Height (m)
+                                                                Hydraulic Head Height (m)
                                                             </label>
                                                             <input
                                                                 type="number"
                                                                 placeholder="45"
                                                                 value={head}
-                                                                onChange={(e) =>
-                                                                    setHead(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                                                onChange={(e) => {
+                                                                    setHead(e.target.value);
+                                                                    clearErr('head');
+                                                                }}
+                                                                className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.head ? 'border-red-500' : 'border-black/10'}`}
                                                             />
+                                                            {fieldErrors.head && (
+                                                                <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.head}</span>
+                                                            )}
                                                         </div>
                                                     </>
                                                 )}
@@ -899,7 +1024,7 @@ export default function CreateResource() {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setStep(3)}
+                                                onClick={handleContinueToStep3}
                                                 className="flex items-center justify-center bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
                                             >
                                                 CONTINUE TO STEP 3
@@ -925,9 +1050,7 @@ export default function CreateResource() {
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                handleRemoveTag(
-                                                                    tag,
-                                                                )
+                                                                handleRemoveTag(tag)
                                                             }
                                                             className="font-bold text-white hover:text-red-500"
                                                         >
@@ -940,13 +1063,9 @@ export default function CreateResource() {
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    placeholder="e.g. Community Roof"
+                                                    placeholder="e.g. Community Rooftop"
                                                     value={tagInput}
-                                                    onChange={(e) =>
-                                                        setTagInput(
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    onChange={(e) => setTagInput(e.target.value)}
                                                     className="w-full flex-1 border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
                                                 />
                                                 <button
@@ -970,11 +1089,7 @@ export default function CreateResource() {
                                             ) : (
                                                 <select
                                                     value={groupId}
-                                                    onChange={(e) =>
-                                                        setGroupId(
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    onChange={(e) => setGroupId(e.target.value)}
                                                     className="w-full border border-black/10 bg-white/40 px-4 py-3 uppercase tracking-widest text-black transition-colors focus:bg-white/60 focus:outline-none"
                                                 >
                                                     <option value="">
@@ -1001,17 +1116,14 @@ export default function CreateResource() {
 
                                         <div className="space-y-3">
                                             <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                Upload Resource Blueprints /
-                                                Schematic Photos
+                                                Upload Resource Blueprints / Schematic Photos
                                             </label>
                                             <div
                                                 onDragOver={(e) => {
                                                     e.preventDefault();
                                                     setDragOver(true);
                                                 }}
-                                                onDragLeave={() =>
-                                                    setDragOver(false)
-                                                }
+                                                onDragLeave={() => setDragOver(false)}
                                                 onDrop={handleFileDrop}
                                                 onClick={() => {
                                                     const mockName = `${type}_blueprint_schematic.png`;
@@ -1028,8 +1140,7 @@ export default function CreateResource() {
                                             >
                                                 <Upload className="h-6 w-6 text-black/60" />
                                                 <span className="text-xs uppercase tracking-widest text-black">
-                                                    DRAG AND DROP OR CLICK TO
-                                                    UPLOAD
+                                                    DRAG AND DROP OR CLICK TO UPLOAD
                                                 </span>
                                                 <span className="text-[10px] uppercase tracking-widest text-black/40">
                                                     PNG, PDF, SVG UP TO 10MB
@@ -1052,17 +1163,12 @@ export default function CreateResource() {
                                                         <Check className="h-4 w-4" />
                                                         <span className="text-[10px] uppercase tracking-widest">
                                                             {uploadedFile.name}{' '}
-                                                            ({uploadedFile.size}
-                                                            )
+                                                            ({uploadedFile.size})
                                                         </span>
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        onClick={() =>
-                                                            setUploadedFile(
-                                                                null,
-                                                            )
-                                                        }
+                                                        onClick={() => setUploadedFile(null)}
                                                         className="text-white hover:text-red-500"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -1079,11 +1185,7 @@ export default function CreateResource() {
                                                 rows="4"
                                                 placeholder="Detail the operational configuration or group mission directives of this energy resource..."
                                                 value={description}
-                                                onChange={(e) =>
-                                                    setDescription(
-                                                        e.target.value,
-                                                    )
-                                                }
+                                                onChange={(e) => setDescription(e.target.value)}
                                                 className="w-full border border-black/10 bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
                                             />
                                         </div>
@@ -1100,7 +1202,7 @@ export default function CreateResource() {
                                             <button
                                                 type="submit"
                                                 disabled={submitLoading}
-                                                className="flex items-center justify-center gap-2 bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                className="flex items-center justify-center gap-2 bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
                                             >
                                                 <Save className="h-4 w-4" />
                                                 {submitLoading
@@ -1117,6 +1219,7 @@ export default function CreateResource() {
                             </form>
                         </div>
                     </div>
+
                     {/* Interactive Map & Yield Preview Sidebar */}
                     <div className="space-y-8 lg:col-span-4">
                         <div className="eco-nexus-glass-card relative overflow-hidden border border-black/10 bg-[#dfed2b]/10 p-6 shadow-xl md:p-8">
@@ -1144,9 +1247,7 @@ export default function CreateResource() {
                                     type="text"
                                     placeholder="Search city, district, state..."
                                     value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="flex-1 border border-black/10 bg-white px-3 py-2 font-['Montserrat'] text-xs font-bold uppercase text-black placeholder:text-black/30 focus:outline-none"
                                 />
                                 <button
@@ -1189,6 +1290,7 @@ export default function CreateResource() {
                                         setLng={setLongitude}
                                         setLocName={setLocationName}
                                         setRegName={setRegion}
+                                        clearErr={clearErr}
                                     />
                                     {latitude &&
                                         longitude &&

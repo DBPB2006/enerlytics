@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
 import {
     Cpu,
     Aperture,
@@ -12,45 +13,46 @@ import {
     ArrowUpRight,
     MessageSquare,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 
-// Smooth, Cinematic Animation Variants
+// Snappy, Premium Animation Variants
 const staggerContainer = {
     hidden: { opacity: 0 },
     show: {
         opacity: 1,
-        transition: { staggerChildren: 0.2 },
+        transition: { staggerChildren: 0.05 },
     },
 };
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 50 },
+    hidden: { opacity: 0, y: 12 },
     show: {
         opacity: 1,
         y: 0,
-        transition: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
     },
 };
 
 const fadeRight = {
-    hidden: { opacity: 0, x: -50 },
+    hidden: { opacity: 0, x: -12 },
     show: {
         opacity: 1,
         x: 0,
-        transition: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
     },
 };
 
 const scaleUp = {
-    hidden: { opacity: 0, scale: 0.95 },
+    hidden: { opacity: 0, scale: 0.98 },
     show: {
         opacity: 1,
         scale: 1,
-        transition: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
     },
 };
 
 export default function Home() {
+    const { user } = useSelector((state) => state.auth);
     const [metrics, setMetrics] = useState({
         total_resources: 0,
         total_output: 0,
@@ -102,61 +104,7 @@ export default function Home() {
         fetchMetrics();
     }, []);
 
-    const categories = [
-        {
-            id: 'solar',
-            title: 'Solar Power',
-            icon: Aperture,
-            color: '#dfed2b',
-            text: 'Solar panels capturing clean solar energy.',
-        },
-        {
-            id: 'wind',
-            title: 'Wind Energy',
-            icon: Layers,
-            color: '#A2E3E3',
-            text: 'Wind turbines capturing regional wind kinetic energy.',
-        },
-        {
-            id: 'hydro',
-            title: 'Hydro Power',
-            icon: Database,
-            color: '#9FD3FF',
-            text: 'Hydroelectric generators tracking clean water currents.',
-        },
-        {
-            id: 'biomass',
-            title: 'Biomass Gas',
-            icon: Flame,
-            color: '#C3EAA6',
-            text: 'Organic gasification units harvesting clean bioenergy.',
-        },
-        {
-            id: 'geothermal',
-            title: 'Geothermal Heat',
-            icon: Globe,
-            color: '#FFA47A',
-            text: 'Tapping subterranean core heat pressure.',
-        },
-    ];
 
-    const testimonials = [
-        {
-            name: 'Kassandra Vance',
-            role: 'Wind Group Lead',
-            text: 'Enerlytics gave our regional group the exact transparent publishing power we needed to secure state clean energy credits.',
-        },
-        {
-            name: 'Julian Thorne',
-            role: 'Solar Operator',
-            text: 'The playbook resources helped us align 12 neighborhood rooftops in under a week. Incredible UI!',
-        },
-        {
-            name: 'Sylvia Chen',
-            role: 'Hydro Specialist',
-            text: 'Democratic resource mapping keeps our local river stream turbine outputs transparent and auditable.',
-        },
-    ];
 
     return (
         <div className="relative z-10 w-full select-none overflow-hidden pb-20">
@@ -185,12 +133,12 @@ export default function Home() {
                         >
                             Fuel Your Day <br />
                             <motion.span
-                                initial={{ opacity: 0, rotateX: 90 }}
-                                animate={{ opacity: 1, rotateX: 0 }}
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
                                 transition={{
-                                    duration: 1.2,
+                                    duration: 0.45,
                                     ease: [0.16, 1, 0.3, 1],
-                                    delay: 0.6,
+                                    delay: 0.15,
                                 }}
                                 className="mx-1 inline-block bg-black px-4 py-2 text-white shadow-2xl"
                             >
@@ -209,47 +157,42 @@ export default function Home() {
                             community groups.
                         </motion.p>
 
-                        <motion.div
-                            variants={fadeUp}
+                        <div
                             className="flex flex-wrap gap-4 pt-8"
                         >
                             <Link to="/resources">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     className="leaf-shape-sm group flex items-center justify-center gap-3 border border-black bg-black px-8 py-5 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-[#dfed2b] shadow-2xl transition-all duration-500 hover:bg-transparent hover:text-black hover:backdrop-blur-md"
                                 >
                                     EXPLORE RESOURCES{' '}
                                     <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-2" />
-                                </motion.button>
+                                </button>
                             </Link>
                             <Link to="/analytics">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
                                     className="flex items-center justify-center border border-black bg-white/10 px-8 py-5 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-lg backdrop-blur-md transition-all duration-500 hover:bg-black hover:text-white"
                                 >
                                     OUR ENERGY ANALYTICS
-                                </motion.button>
+                                </button>
                             </Link>
-                        </motion.div>
+                        </div>
                     </motion.div>
 
                     {/* Abstract Hero Decor */}
                     <motion.div
-                        initial={{ opacity: 0, x: 50 }}
+                        initial={{ opacity: 0, x: 12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{
-                            duration: 1.5,
+                            duration: 0.45,
                             ease: [0.16, 1, 0.3, 1],
-                            delay: 0.4,
+                            delay: 0.15,
                         }}
                         className="perspective-1000 relative hidden justify-end lg:col-span-4 lg:flex"
                     >
                         <motion.div
-                            animate={{ y: [0, -20, 0] }}
+                            animate={{ y: [0, -3, 0] }}
                             transition={{
-                                duration: 6,
+                                duration: 8,
                                 repeat: Infinity,
                                 ease: 'easeInOut',
                             }}
@@ -258,12 +201,12 @@ export default function Home() {
                             <div className="absolute -right-3 -top-3 bg-[#dfed2b] px-3 py-1 font-['Montserrat'] text-[8px] font-bold uppercase tracking-widest text-black shadow-md">
                                 ENERGY TRACKING
                             </div>
-
+ 
                             <div className="mb-8 flex items-center gap-4">
                                 <motion.div
                                     animate={{ rotate: 360 }}
                                     transition={{
-                                        duration: 10,
+                                        duration: 50,
                                         repeat: Infinity,
                                         ease: 'linear',
                                     }}
@@ -308,10 +251,9 @@ export default function Home() {
                                     </p>
                                 </div>
                             </div>
-
+ 
                             <div className="space-y-4 font-['Montserrat'] text-xs font-bold uppercase tracking-widest">
-                                <motion.div
-                                    whileHover={{ scale: 1.05, x: 5 }}
+                                <div
                                     className="group relative flex cursor-pointer items-center justify-between overflow-hidden border border-black/5 bg-white/40 p-4 shadow-inner"
                                 >
                                     <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/20 transition-transform duration-300 group-hover:translate-x-0" />
@@ -321,9 +263,8 @@ export default function Home() {
                                     <span className="relative z-10 font-black text-black">
                                         +18.4 MW
                                     </span>
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.05, x: 5 }}
+                                </div>
+                                <div
                                     className="group relative flex cursor-pointer items-center justify-between overflow-hidden border border-black/5 bg-white/40 p-4 shadow-inner"
                                 >
                                     <div className="absolute inset-0 z-0 -translate-x-full bg-[#A2E3E3]/20 transition-transform duration-300 group-hover:translate-x-0" />
@@ -333,7 +274,7 @@ export default function Home() {
                                     <span className="relative z-10 font-black text-black">
                                         +14.2 MW
                                     </span>
-                                </motion.div>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -351,18 +292,17 @@ export default function Home() {
                 >
                     <motion.div
                         variants={fadeUp}
-                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500"
+                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#dfed2b]/40"
                     >
-                        <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-500 ease-out group-hover:translate-y-0" />
                         <div className="relative z-10 space-y-4">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 transition-colors duration-500 group-hover:text-black/50">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 ACTIVE CLEAN OUTPUT
                             </span>
-                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] transition-colors duration-500 group-hover:text-black md:text-7xl">
+                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] md:text-7xl">
                                 {loading
                                     ? '0.0'
                                     : metrics.total_output.toFixed(1)}{' '}
-                                <span className="font-['Montserrat'] text-lg font-bold tracking-widest text-white/60 transition-colors duration-500 group-hover:text-black/60">
+                                <span className="font-['Montserrat'] text-lg font-bold tracking-widest text-white/60">
                                     MW
                                 </span>
                             </div>
@@ -371,16 +311,15 @@ export default function Home() {
 
                     <motion.div
                         variants={fadeUp}
-                        className="hover-glow-wind group relative cursor-pointer space-y-4 overflow-hidden border border-y border-white/10 border-white/5 bg-black p-8 text-white transition-all duration-500 md:border-x md:border-y-0"
+                        className="hover-glow-wind group relative cursor-pointer space-y-4 overflow-hidden border border-y border-white/10 border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#A2E3E3]/40 md:border-x md:border-y-0"
                     >
-                        <div className="absolute inset-0 z-0 translate-y-full bg-[#A2E3E3] transition-transform duration-500 ease-out group-hover:translate-y-0" />
                         <div className="relative z-10 space-y-4">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 transition-colors duration-500 group-hover:text-black/50">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 REGISTERED RESOURCES
                             </span>
-                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-white transition-colors duration-500 group-hover:text-black md:text-7xl">
+                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-white md:text-7xl">
                                 {loading ? '0' : metrics.total_resources}{' '}
-                                <span className="font-['Montserrat'] text-lg font-bold tracking-widest text-white/60 transition-colors duration-500 group-hover:text-black/60">
+                                <span className="font-['Montserrat'] text-lg font-bold tracking-widest text-white/60">
                                     GROUPS
                                 </span>
                             </div>
@@ -389,14 +328,13 @@ export default function Home() {
 
                     <motion.div
                         variants={fadeUp}
-                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500"
+                        className="hover-glow-solar group relative cursor-pointer space-y-4 overflow-hidden border border-white/5 bg-black p-8 text-white transition-all duration-500 hover:border-[#dfed2b]/40"
                     >
-                        <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-500 ease-out group-hover:translate-y-0" />
                         <div className="relative z-10 space-y-4">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 transition-colors duration-500 group-hover:text-black/50">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 AVG CELL EFFICIENCY
                             </span>
-                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] transition-colors duration-500 group-hover:text-black md:text-7xl">
+                            <div className="font-['Montserrat'] text-5xl font-black tracking-tighter text-[#dfed2b] md:text-7xl">
                                 {metrics.average_efficiency}
                             </div>
                         </div>
@@ -418,16 +356,15 @@ export default function Home() {
                     </div>
 
                     <div className="relative z-10 grid grid-cols-1 items-stretch lg:grid-cols-12">
-                        <div className="hover-glow-solar group relative flex cursor-pointer flex-col justify-center overflow-hidden border-r border-black/5 bg-white/40 p-12 transition-all duration-500 md:p-16 lg:col-span-5">
-                            <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                        <div className="group relative flex cursor-pointer flex-col justify-center overflow-hidden border-r border-black/5 bg-white/40 p-12 transition-all duration-500 hover:bg-white/70 md:p-16 lg:col-span-5">
                             <div className="relative z-10 flex h-full flex-col justify-center">
-                                <span className="mb-6 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/50 transition-colors group-hover:text-black/50">
+                                <span className="mb-6 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/50">
                                     // GEOSPATIAL COORDINATES
                                 </span>
-                                <h2 className="mb-6 font-['Montserrat'] text-5xl font-black uppercase leading-[0.9] tracking-tighter text-black transition-colors group-hover:text-black md:text-6xl">
+                                <h2 className="mb-6 font-['Montserrat'] text-5xl font-black uppercase leading-[0.9] tracking-tighter text-black md:text-6xl">
                                     INTERACTIVE RESOURCE MAP
                                 </h2>
-                                <p className="mb-10 font-['Montserrat'] text-xs font-medium uppercase leading-relaxed tracking-widest text-black/70 transition-colors group-hover:text-black/80">
+                                <p className="mb-10 font-['Montserrat'] text-xs font-medium uppercase leading-relaxed tracking-widest text-black/70">
                                     Users map clean energy generation across
                                     regional areas. Click or hover on the
                                     interactive spots to view active power
@@ -438,26 +375,22 @@ export default function Home() {
                                     to="/resources"
                                     className="relative z-20 inline-block"
                                 >
-                                    <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        className="w-full border border-black bg-transparent px-8 py-5 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-black shadow-lg transition-all duration-500 hover:bg-black hover:text-white group-hover:border-black group-hover:bg-black group-hover:text-[#dfed2b] md:w-auto"
+                                    <button
+                                        className="w-full border border-black bg-transparent px-8 py-5 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-black shadow-lg transition-all duration-500 hover:bg-black hover:text-white md:w-auto"
                                     >
                                         LAUNCH LIVE MAP
-                                    </motion.button>
+                                    </button>
                                 </Link>
                             </div>
                         </div>
 
                         <div className="relative flex min-h-[500px] items-center justify-center overflow-hidden bg-black/[0.03] lg:col-span-7">
-                            {/* Abstract Map Graphic */}
-                            <svg
-                                className="absolute inset-0 m-auto h-[120%] w-[120%] text-black/[0.04]"
-                                fill="currentColor"
-                                viewBox="0 0 800 400"
-                            >
-                                <path d="M150,150 Q180,120 220,160 T300,120 T380,180 T480,130 T600,190 T700,110 T750,200 L750,300 L150,300 Z" />
-                            </svg>
+                            {/* Real Map Graphic */}
+                            <img
+                                src="/map-bg.png"
+                                alt="Geospatial Map Background"
+                                className="absolute inset-0 h-full w-full object-cover opacity-80"
+                            />
 
                             {mapNodes.map((node) => (
                                 <div
@@ -467,16 +400,11 @@ export default function Home() {
                                     onMouseEnter={() => setHoveredNode(node)}
                                     onMouseLeave={() => setHoveredNode(null)}
                                 >
-                                    <motion.div
-                                        whileHover={{ scale: 1.5 }}
-                                        transition={{
-                                            duration: 0.5,
-                                            ease: 'easeOut',
-                                        }}
+                                    <div
                                         className="relative h-4 w-4 rounded-full bg-black shadow-lg"
                                     >
                                         <span className="absolute inset-0 animate-ping rounded-full bg-[#dfed2b] opacity-50" />
-                                    </motion.div>
+                                    </div>
                                 </div>
                             ))}
 
@@ -520,34 +448,39 @@ export default function Home() {
                     variants={fadeUp}
                     className="leaf-shape-xl hover-glow-solar group relative cursor-pointer overflow-hidden bg-black p-16 text-center shadow-2xl transition-all duration-500 md:p-24"
                 >
-                    {/* Slide-in vibrant background overlay */}
-                    <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-700 ease-out group-hover:translate-y-0" />
-
                     {/* Subtle noise/texture overlay */}
                     <div className="pointer-events-none absolute inset-0 z-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10" />
 
                     <div className="relative z-10 mx-auto max-w-4xl space-y-12">
-                        <h2 className="font-['Montserrat'] text-5xl font-black uppercase leading-[0.9] tracking-tighter text-white transition-colors duration-500 group-hover:text-black md:text-8xl">
+                        <h2 className="font-['Montserrat'] text-5xl font-black uppercase leading-[0.9] tracking-tighter text-white md:text-8xl">
                             READY TO CLAIM <br />{' '}
-                            <span className="text-[#dfed2b] transition-colors duration-500 group-hover:text-black">
+                            <span className="text-[#dfed2b]">
                                 GRID INDEPENDENCE?
                             </span>
                         </h2>
-                        <p className="mx-auto max-w-2xl font-['Montserrat'] text-xs font-bold uppercase leading-relaxed tracking-widest text-white/70 transition-colors duration-500 group-hover:text-black/75 md:text-sm">
+                        <p className="mx-auto max-w-2xl font-['Montserrat'] text-xs font-bold uppercase leading-relaxed tracking-widest text-white/70 md:text-sm">
                             Register your local wind turbines, solar arrays, or
                             hydro streams. Empower your neighborhood with
                             transparent energy tracking.
                         </p>
                         <div className="flex flex-wrap justify-center gap-6 pt-8">
-                            <Link to="/signup" className="relative z-20">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="bg-[#dfed2b] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 group-hover:bg-black group-hover:text-[#dfed2b]"
-                                >
-                                    SIGN UP
-                                </motion.button>
-                            </Link>
+                            {user ? (
+                                <Link to="/resources" className="relative z-20">
+                                    <button
+                                        className="bg-[#dfed2b] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
+                                    >
+                                        GO TO MAP
+                                    </button>
+                                </Link>
+                            ) : (
+                                <Link to="/signup" className="relative z-20">
+                                    <button
+                                        className="bg-[#dfed2b] px-10 py-6 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black shadow-2xl transition-all duration-500 hover:bg-white hover:text-black"
+                                    >
+                                        SIGN UP
+                                    </button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </motion.div>

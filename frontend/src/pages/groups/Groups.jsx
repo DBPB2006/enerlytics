@@ -7,13 +7,11 @@ import {
     Loader2,
     ShieldAlert,
     Users,
-    ArrowRight,
-    Sparkles,
-    X,
     Compass,
     Globe,
+    X,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 import confetti from 'canvas-confetti';
 
 export default function Groups() {
@@ -27,7 +25,9 @@ export default function Groups() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState('');
+    
     const [modalError, setModalError] = useState('');
+    const [modalFieldErrors, setModalFieldErrors] = useState({ name: '', location: '', description: '' });
     const [modalLoading, setModalLoading] = useState(false);
 
     const fetchGroups = async () => {
@@ -40,7 +40,6 @@ export default function Groups() {
             setJoinedGroups(joinedRes.data);
             setDiscoverGroups(discoverRes.data);
 
-            // Check if user belongs to any group but hasn't enabled MFA
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (joinedRes.data.length > 0 && !user.mfa_enabled) {
                 alert(
@@ -85,9 +84,43 @@ export default function Groups() {
         }
     };
 
+    const validateModalForm = () => {
+        let isValid = true;
+        const errors = { name: '', location: '', description: '' };
+
+        if (!name.trim()) {
+            errors.name = 'Group name is required.';
+            isValid = false;
+        } else if (name.trim().length < 3) {
+            errors.name = 'Group name must be at least 3 characters.';
+            isValid = false;
+        }
+
+        if (!location.trim()) {
+            errors.location = 'Location/Region is required.';
+            isValid = false;
+        }
+
+        if (!description.trim()) {
+            errors.description = 'Description/Mission statement is required.';
+            isValid = false;
+        } else if (description.trim().length < 10) {
+            errors.description = 'Description must be at least 10 characters.';
+            isValid = false;
+        }
+
+        setModalFieldErrors(errors);
+        return isValid;
+    };
+
     const handleCreateGroup = async (e) => {
         e.preventDefault();
         setModalError('');
+
+        if (!validateModalForm()) {
+            return;
+        }
+
         setModalLoading(true);
 
         try {
@@ -106,6 +139,7 @@ export default function Groups() {
                 setDescription('');
                 setLocation('');
                 setModalOpen(false);
+                setModalFieldErrors({ name: '', location: '', description: '' });
                 fetchGroups();
             }
         } catch (err) {
@@ -147,7 +181,11 @@ export default function Groups() {
                     </div>
 
                     <button
-                        onClick={() => setModalOpen(true)}
+                        onClick={() => {
+                            setModalOpen(true);
+                            setModalError('');
+                            setModalFieldErrors({ name: '', location: '', description: '' });
+                        }}
                         className="flex items-center justify-center gap-2 self-start border border-black/10 bg-[#dfed2b] px-6 py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white sm:self-auto"
                     >
                         <Plus className="h-4 w-4" />
@@ -197,14 +235,9 @@ export default function Groups() {
                                                 transition={{
                                                     delay: idx * 0.05,
                                                 }}
-                                                whileHover={{
-                                                    x: -6,
-                                                    scale: 1.01,
-                                                }}
                                                 key={g.id}
                                                 className="hover-glow-solar hover-slide-chevron group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-6 shadow-md transition-all duration-300"
                                             >
-                                                {/* Slide-in vibrant background overlay */}
                                                 <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/15 transition-transform duration-500 ease-out group-hover:translate-x-0" />
 
                                                 <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between">
@@ -273,14 +306,9 @@ export default function Groups() {
                                                 transition={{
                                                     delay: idx * 0.05,
                                                 }}
-                                                whileHover={{
-                                                    x: 6,
-                                                    scale: 1.01,
-                                                }}
                                                 key={g.id}
                                                 className="hover-glow-wind hover-slide-chevron group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-6 shadow-md transition-all duration-300"
                                             >
-                                                {/* Slide-in vibrant background overlay */}
                                                 <div className="absolute inset-0 z-0 translate-x-full bg-[#A2E3E3]/15 transition-transform duration-500 ease-out group-hover:translate-x-0" />
 
                                                 <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between">
@@ -370,14 +398,21 @@ export default function Groups() {
                                             </label>
                                             <input
                                                 type="text"
-                                                required
-                                                placeholder="e.g. Eastside Community Solar"
+                                                placeholder="e.g. Karnataka Solar Cooperative"
                                                 value={name}
-                                                onChange={(e) =>
-                                                    setName(e.target.value)
-                                                }
-                                                className="w-full border border-black/10 bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none"
+                                                onChange={(e) => {
+                                                    setName(e.target.value);
+                                                    if (modalFieldErrors.name) {
+                                                        setModalFieldErrors(prev => ({ ...prev, name: '' }));
+                                                    }
+                                                }}
+                                                className={`w-full border bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none ${modalFieldErrors.name ? 'border-red-500' : 'border-black/10'}`}
                                             />
+                                            {modalFieldErrors.name && (
+                                                <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                                    {modalFieldErrors.name}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -386,14 +421,21 @@ export default function Groups() {
                                             </label>
                                             <input
                                                 type="text"
-                                                required
-                                                placeholder="e.g. Portland, OR"
+                                                placeholder="e.g. Bangalore, KA"
                                                 value={location}
-                                                onChange={(e) =>
-                                                    setLocation(e.target.value)
-                                                }
-                                                className="w-full border border-black/10 bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none"
+                                                onChange={(e) => {
+                                                    setLocation(e.target.value);
+                                                    if (modalFieldErrors.location) {
+                                                        setModalFieldErrors(prev => ({ ...prev, location: '' }));
+                                                    }
+                                                }}
+                                                className={`w-full border bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none ${modalFieldErrors.location ? 'border-red-500' : 'border-black/10'}`}
                                             />
+                                            {modalFieldErrors.location && (
+                                                <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                                    {modalFieldErrors.location}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -402,24 +444,27 @@ export default function Groups() {
                                             </label>
                                             <textarea
                                                 rows="3"
-                                                required
                                                 placeholder="Describe the purpose of this group..."
                                                 value={description}
-                                                onChange={(e) =>
-                                                    setDescription(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                className="w-full border border-black/10 bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none"
+                                                onChange={(e) => {
+                                                    setDescription(e.target.value);
+                                                    if (modalFieldErrors.description) {
+                                                        setModalFieldErrors(prev => ({ ...prev, description: '' }));
+                                                    }
+                                                }}
+                                                className={`w-full border bg-black/5 px-4 py-3 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white focus:outline-none ${modalFieldErrors.description ? 'border-red-500' : 'border-black/10'}`}
                                             />
+                                            {modalFieldErrors.description && (
+                                                <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                                    {modalFieldErrors.description}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="flex justify-end gap-4 border-t border-black/10 pt-4">
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    setModalOpen(false)
-                                                }
+                                                onClick={() => setModalOpen(false)}
                                                 className="font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60 hover:text-black"
                                             >
                                                 CANCEL
@@ -427,7 +472,7 @@ export default function Groups() {
                                             <button
                                                 type="submit"
                                                 disabled={modalLoading}
-                                                className="bg-black px-6 py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                                className="bg-black px-6 py-3 font-['Montserrat'] text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
                                             >
                                                 {modalLoading
                                                     ? 'CREATING...'

@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import {
-    ShieldCheck,
-    Loader2,
-    AlertCircle,
-    Copy,
-    Check,
-    Lock,
-    QrCode,
-} from 'lucide-react';
-import api from '../utils/api';
+import { Loader2, AlertCircle, Copy, Check, Lock, QrCode } from 'lucide-react';
+import api from '../../utils/api';
+import { loginSuccess } from '../../redux/authSlice';
 
 export default function MfaSetup() {
     const [searchParams] = useSearchParams();
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const userId = searchParams.get('user_id') || currentUser.id;
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    const { user: currentUser } = useSelector((state) => state.auth);
+    const userId = searchParams.get('user_id') || currentUser?.id;
 
     const [qrCode, setQrCode] = useState('');
     const [secret, setSecret] = useState('');
@@ -67,12 +63,7 @@ export default function MfaSetup() {
                 code: code,
             });
             if (response.data.token && response.data.user) {
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem(
-                    'user',
-                    JSON.stringify(response.data.user),
-                );
-                window.dispatchEvent(new Event('auth-change'));
+                dispatch(loginSuccess({ token: response.data.token, user: response.data.user }));
                 navigate('/');
             }
         } catch (err) {

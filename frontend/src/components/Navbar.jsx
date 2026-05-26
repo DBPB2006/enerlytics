@@ -1,32 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector, useDispatch } from 'react-redux';
+import { motion } from 'framer-motion';
 import { Power, User } from 'lucide-react';
+import { logout } from '../redux/authSlice';
 
 export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [authTrigger, setAuthTrigger] = useState(0);
+    const dispatch = useDispatch();
     const [hoveredIdx, setHoveredIdx] = useState(null);
 
-    useEffect(() => {
-        const handleAuthChange = () => setAuthTrigger((prev) => prev + 1);
-        window.addEventListener('auth-change', handleAuthChange);
-        window.addEventListener('storage', handleAuthChange);
-        return () => {
-            window.removeEventListener('auth-change', handleAuthChange);
-            window.removeEventListener('storage', handleAuthChange);
-        };
-    }, []);
-
-    const token = localStorage.getItem('token');
-    const userString = localStorage.getItem('user');
-    const user = userString ? JSON.parse(userString) : null;
+    const { user } = useSelector((state) => state.auth);
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.dispatchEvent(new Event('auth-change'));
+        dispatch(logout());
         navigate('/login');
     };
 
@@ -90,16 +78,14 @@ export default function Navbar() {
                                     />
                                 )}
 
-                                {/* Sliding Hover Capsule Backdrop */}
+                                {/* Local Hover Capsule Backdrop */}
                                 {hoveredIdx === idx && (
                                     <motion.div
-                                        layoutId="navbar-hover-capsule"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.15 }}
                                         className="absolute inset-0 -z-10 rounded-full bg-black/5"
-                                        transition={{
-                                            type: 'spring',
-                                            stiffness: 400,
-                                            damping: 30,
-                                        }}
                                     />
                                 )}
                                 {link.label}
@@ -152,3 +138,4 @@ export default function Navbar() {
         </header>
     );
 }
+

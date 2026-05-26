@@ -4,21 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
     Cpu,
-    AlertTriangle,
-    MapPin,
-    Activity,
     Sun,
     Wind,
     Droplet,
     Flame,
     Globe,
     Search,
-    BookOpen,
     Download,
-    HelpCircle,
-    CheckSquare,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 
 const CATEGORY_DOCS = {
     solar: [
@@ -230,7 +224,6 @@ export default function CategoryResources() {
             className="relative w-full select-none pb-20 pt-6"
         >
             <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-12">
-                {/* Back Link */}
                 <Link
                     to="/categories"
                     className="group mb-8 inline-flex items-center gap-2 border border-black/10 px-4 py-2 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60 backdrop-blur-md transition-colors hover:bg-white/40 hover:text-black"
@@ -239,7 +232,6 @@ export default function CategoryResources() {
                     BACK TO SYSTEMS
                 </Link>
 
-                {/* Sub-hero Profile Header */}
                 <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -270,7 +262,6 @@ export default function CategoryResources() {
                             </p>
                         </div>
 
-                        {/* Aggregated values */}
                         <div className="relative z-10 flex min-w-[200px] shrink-0 flex-row justify-between gap-8 border-t border-black/10 pt-8 lg:flex-col lg:justify-center lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
                             <div>
                                 <span className="mb-1 block font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/40">
@@ -295,7 +286,6 @@ export default function CategoryResources() {
                     </div>
                 </motion.div>
 
-                {/* Tab navigation with gliding underline */}
                 <div className="relative mb-8 flex gap-4 font-['Montserrat'] text-xs font-bold">
                     {['nodes', 'docs'].map((tab) => (
                         <button
@@ -324,7 +314,6 @@ export default function CategoryResources() {
                     ))}
                 </div>
 
-                {/* Tab Contents */}
                 <AnimatePresence mode="wait">
                     {activeTab === 'nodes' ? (
                         <motion.div
@@ -335,12 +324,10 @@ export default function CategoryResources() {
                             variants={containerVariants}
                             className="space-y-8"
                         >
-                            {/* Search and Filters */}
                             <motion.div
                                 variants={itemVariants}
                                 className="eco-nexus-glass-card flex flex-col items-center justify-between gap-6 p-4 shadow-xl md:flex-row md:p-6"
                             >
-                                {/* Search input */}
                                 <div className="relative flex w-full items-center md:max-w-md">
                                     <Search className="absolute left-4 h-5 w-5 text-black/40" />
                                     <input
@@ -354,7 +341,6 @@ export default function CategoryResources() {
                                     />
                                 </div>
 
-                                {/* Filter chips */}
                                 <div className="scrollbar-hide flex w-full gap-2 overflow-x-auto pb-2 md:w-auto md:pb-0">
                                     {[
                                         'all',
@@ -409,7 +395,6 @@ export default function CategoryResources() {
                                                 whileHover={{ y: -8 }}
                                                 className={`eco-nexus-glass-card group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-8 shadow-xl transition-all duration-500 ${glowClass} hover-slide-chevron`}
                                             >
-                                                {/* Slide-in vibrant background overlay */}
                                                 <div
                                                     className="absolute inset-0 z-0 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0"
                                                     style={{
@@ -445,32 +430,21 @@ export default function CategoryResources() {
 
                                                         <div className="space-y-3 font-['Montserrat'] text-[10px] font-bold uppercase text-black/70 transition-colors duration-300 group-hover:text-black">
                                                             <div className="flex items-center justify-between border-b border-black/10 pb-2">
-                                                                <span>
-                                                                    CAPACITY
-                                                                </span>
+                                                                <span>CAPACITY</span>
                                                                 <span className="text-sm text-black">
-                                                                    {
-                                                                        res.capacity
-                                                                    }{' '}
-                                                                    MW
+                                                                    {res.capacity} MW
                                                                 </span>
                                                             </div>
 
                                                             <div className="flex items-center justify-between border-b border-black/10 pb-2">
-                                                                <span>
-                                                                    RATING
-                                                                </span>
+                                                                <span>RATING</span>
                                                                 <span className="text-black">
-                                                                    {
-                                                                        res.accuracy
-                                                                    }
+                                                                    {res.accuracy}
                                                                 </span>
                                                             </div>
 
                                                             <div className="flex items-center justify-between pb-2">
-                                                                <span>
-                                                                    LOCATION
-                                                                </span>
+                                                                <span>LOCATION</span>
                                                                 <span className="max-w-[150px] truncate text-right text-black">
                                                                     {res.location_name ||
                                                                         `${parseFloat(res.latitude).toFixed(2)}, ${parseFloat(res.longitude).toFixed(2)}`}
@@ -532,7 +506,6 @@ export default function CategoryResources() {
                                             whileHover={{ y: -8 }}
                                             className={`eco-nexus-glass-card group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden p-8 shadow-xl transition-all duration-500 ${glowClass}`}
                                         >
-                                            {/* Slide-in vibrant background overlay */}
                                             <div
                                                 className="absolute inset-0 z-0 -translate-y-full transition-transform duration-500 ease-out group-hover:translate-y-0"
                                                 style={{

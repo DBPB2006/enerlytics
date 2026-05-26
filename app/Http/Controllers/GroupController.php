@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class GroupController extends Controller
 {
     /**
-     * Reusable role checker helper
+     * Reusable role checker helper (Unit VI: Eloquent pivot table queries)
      */
     private function hasRole($group, $roles)
     {
@@ -20,15 +20,16 @@ class GroupController extends Controller
     }
 
     /**
-     * Get groups the user belongs to (approved)
+     * Get groups the user belongs to (Unit VI: Relationships & Unit II: JSON Response)
      */
     public function index(Request $request)
     {
-        return response()->json($request->user()->groups()->wherePivot('status', 'approved')->get());
+        $groups = $request->user()->groups()->wherePivot('status', 'approved')->get();
+        return response()->json($groups);
     }
 
     /**
-     * Get a single group (Approved members only)
+     * Get a single group (Unit VI: Eloquent query & approved members checking)
      */
     public function show(Request $request, $id)
     {
@@ -43,7 +44,6 @@ class GroupController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Include pivot for role check on frontend
         $group->load(['users' => function ($query) {
             $query->where('users.id', auth()->id());
         }]);
@@ -57,14 +57,13 @@ class GroupController extends Controller
     public function discover(Request $request)
     {
         $joinedGroupIds = $request->user()->groups()->pluck('groups.id');
-
         $groups = Group::whereNotIn('id', $joinedGroupIds)->get();
 
         return response()->json($groups);
     }
 
     /**
-     * Create a new group
+     * Create a new group (Unit V: Form validation & Unit VI: Eloquent insert)
      */
     public function store(Request $request)
     {
@@ -79,6 +78,9 @@ class GroupController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'location' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'The group name is mandatory.',
+            'name.max' => 'The group name cannot exceed 255 characters.',
         ]);
 
         $group = Group::create([
@@ -88,7 +90,7 @@ class GroupController extends Controller
             'owner_id' => $request->user()->id,
         ]);
 
-        // Attach creator as owner and approved
+        // Unit VI: Attach creator as owner and approved on the pivot table
         $group->users()->attach($request->user()->id, [
             'role' => 'owner',
             'status' => 'approved',
@@ -98,7 +100,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Request to join a group
+     * Request to join a group (Unit VI: Pivot insertions)
      */
     public function join(Request $request, $id)
     {
@@ -124,13 +126,12 @@ class GroupController extends Controller
     }
 
     /**
-     * Leave a group
+     * Leave a group (Unit VI: Detaching from relationships)
      */
     public function leave(Request $request, $id)
     {
         $group = Group::findOrFail($id);
 
-        // Cannot leave if owner
         if ($group->owner_id === $request->user()->id) {
             return response()->json(['error' => 'Owners cannot leave. Delete the group instead.'], 400);
         }
@@ -159,7 +160,7 @@ class GroupController extends Controller
     }
 
     /**
-     * Approve a user
+     * Approve a user (Unit VI: Updating pivot details)
      */
     public function approve(Request $request, $id, $userId)
     {
@@ -231,7 +232,6 @@ class GroupController extends Controller
             return response()->json(['error' => 'Forbidden'], 403);
         }
         
-        // Cannot demote owner
         if ($group->owner_id == $userId) {
             return response()->json(['error' => 'Cannot demote owner'], 400);
         }
@@ -240,3 +240,4 @@ class GroupController extends Controller
         return response()->json(['message' => 'User demoted']);
     }
 }
+

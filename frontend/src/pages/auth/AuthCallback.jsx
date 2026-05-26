@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Cpu, Sun, Wind, CheckCircle2 } from 'lucide-react';
-import api from '../utils/api';
-import GridContainer from '../components/GridContainer';
+import { Sun, Wind, CheckCircle2 } from 'lucide-react';
+import api from '../../utils/api';
+import GridContainer from '../../components/GridContainer';
+import { loginSuccess } from '../../redux/authSlice';
 
 export default function AuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [status, setStatus] = useState('VERIFYING AUTHORIZATION...');
     const [stage, setStage] = useState(1); // 1: resolving, 2: profiles, 3: completed
 
@@ -29,17 +32,17 @@ export default function AuthCallback() {
             }
 
             if (token) {
+                // Set temporary token in localStorage so the API client can use it to fetch the user profile
                 localStorage.setItem('token', token);
                 setStage(2);
                 setStatus('RETRIEVING USER PROFILE...');
                 try {
                     // Fetch current authenticated user info
                     const userResponse = await api.get('/user');
-                    localStorage.setItem(
-                        'user',
-                        JSON.stringify(userResponse.data),
-                    );
-                    window.dispatchEvent(new Event('auth-change'));
+                    
+                    // Dispatch loginSuccess which handles store state and persistent storage
+                    dispatch(loginSuccess({ token, user: userResponse.data }));
+
                     setStage(3);
                     setStatus('LOGIN SUCCESSFUL. REDIRECTING...');
                     setTimeout(() => {
@@ -61,7 +64,7 @@ export default function AuthCallback() {
         };
 
         handleAuth();
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, dispatch]);
 
     return (
         <motion.div

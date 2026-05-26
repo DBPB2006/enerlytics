@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class ResourceController extends Controller
 {
     /**
-     * Reusable role checker helper
+     * Reusable role checker helper (Unit VI: Relationships & Pivot tables)
      */
     private function hasRole($group, $roles)
     {
@@ -21,6 +21,9 @@ class ResourceController extends Controller
             ->exists();
     }
 
+    /**
+     * Display all accessible resources (Unit VI: Eloquent CRUD / Query builder)
+     */
     public function index(Request $request)
     {
         $userId = auth()->id();
@@ -38,12 +41,13 @@ class ResourceController extends Controller
                 });
         });
 
-        if ($request->search) {
-            $query->where('title', 'like', '%'.$request->search.'%');
+        // Unit IV: Request retrieval
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%'.$request->input('search').'%');
         }
 
-        if ($request->type) {
-            $query->where('type', $request->type);
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
         }
 
         $resources = $query->with('group')->get();
@@ -52,11 +56,11 @@ class ResourceController extends Controller
             $resource->attachEnergyData();
         }
 
-        return $resources;
+        return response()->json($resources);
     }
 
     /**
-     * Fetch community resources for a specific group.
+     * Fetch community resources for a specific group (Unit VI: Pivot constraints)
      */
     public function groupResources($id)
     {
@@ -77,11 +81,11 @@ class ResourceController extends Controller
             $resource->attachEnergyData();
         }
 
-        return $resources;
+        return response()->json($resources);
     }
 
     /**
-     * Store a newly created resource (Context-aware)
+     * Store a newly created resource (Unit V validation & Unit VI Eloquent insert)
      */
     public function store(Request $request)
     {
@@ -89,8 +93,8 @@ class ResourceController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:solar,wind,hydro,biomass,geothermal',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'latitude' => ['required', new \App\Rules\ValidCoordinate('latitude')],
+            'longitude' => ['required', new \App\Rules\ValidCoordinate('longitude')],
             'location_name' => 'required|string',
             'region' => 'required|string',
             'capacity' => 'required|numeric|min:0',
@@ -107,13 +111,25 @@ class ResourceController extends Controller
             'irradiance' => 'nullable|numeric|min:0',
             'wind_speed' => 'nullable|numeric|min:0',
             'river_flow' => 'nullable|numeric|min:0',
+        ], [
+            'title.required' => 'The resource title is required.',
+            'type.required' => 'The generation type is mandatory.',
+            'latitude.required' => 'Latitude coordinates are required.',
+            'latitude.between' => 'Latitude must be between -90 and 90 degrees.',
+            'longitude.required' => 'Longitude coordinates are required.',
+            'longitude.between' => 'Longitude must be between -180 and 180 degrees.',
+            'capacity.required' => 'The resource capacity rating is mandatory.',
+            'capacity.min' => 'Capacity cannot be negative.',
+            'efficiency.required' => 'Efficiency factor is mandatory.',
+            'efficiency.min' => 'Efficiency factor must be at least 0.',
+            'efficiency.max' => 'Efficiency factor cannot exceed 1.0 (100%).',
         ]);
 
         if (! empty($validated['group_id'])) {
             // Community resource context
             $group = Group::findOrFail($validated['group_id']);
             if (! $this->hasRole($group, ['owner'])) {
-                return response()->json(['error' => 'Forbidden: Only group owners (community leaders) can create resources under this group'], 403);
+                return response()->json(['error' => 'Forbidden: Only group owners can create resources under this group'], 403);
             }
         }
 
@@ -130,7 +146,7 @@ class ResourceController extends Controller
     }
 
     /**
-     * Display the specified resource (Context-aware)
+     * Display the specified resource details (Unit VI Eloquent query)
      */
     public function show($id)
     {
@@ -159,7 +175,7 @@ class ResourceController extends Controller
     }
 
     /**
-     * Update the specified resource (Context-aware)
+     * Update the specified resource (Unit V validation & Unit VI Eloquent update)
      */
     public function update(Request $request, $id)
     {
@@ -194,6 +210,10 @@ class ResourceController extends Controller
             'irradiance' => 'nullable|numeric|min:0',
             'wind_speed' => 'nullable|numeric|min:0',
             'river_flow' => 'nullable|numeric|min:0',
+        ], [
+            'capacity.min' => 'Capacity cannot be negative.',
+            'efficiency.min' => 'Efficiency must be at least 0.',
+            'efficiency.max' => 'Efficiency cannot exceed 1.0 (100%).',
         ]);
 
         $resource->update($validated);
@@ -203,7 +223,7 @@ class ResourceController extends Controller
     }
 
     /**
-     * Remove the specified resource (Context-aware)
+     * Remove the specified resource (Unit VI Eloquent delete)
      */
     public function destroy($id)
     {
@@ -231,7 +251,7 @@ class ResourceController extends Controller
     }
 
     /**
-     * Get summary for all resource categories.
+     * Get summary for all resource categories
      */
     public function categorySummary()
     {
@@ -301,11 +321,13 @@ class ResourceController extends Controller
         return 'low';
     }
 
+    /**
+     * Retrieve historic metrics/simulate if empty (Unit VI database seeding / Eloquent query)
+     */
     public function metrics($id)
     {
         $resource = Resource::findOrFail($id);
 
-        // Security check (same as show)
         if ($resource->group_id) {
             $isMember = $resource->group->users()
                 ->where('user_id', auth()->id())
@@ -363,7 +385,6 @@ class ResourceController extends Controller
                 $metric->save();
             }
 
-            // Fetch again
             $metrics = $resource->metrics()
                 ->where('recorded_at', '>=', now()->subHours(24))
                 ->orderBy('recorded_at', 'asc')
@@ -384,4 +405,3 @@ class ResourceController extends Controller
     }
 
 }
-

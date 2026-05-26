@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import {
-    Lock,
-    Mail,
-    ShieldAlert,
-    User,
-    ShieldCheck,
-    Sun,
-    Zap,
-} from 'lucide-react';
-import api from '../utils/api';
+import { Lock, Mail, ShieldAlert, User, ShieldCheck, Zap } from 'lucide-react';
+import api from '../../utils/api';
+import { loginSuccess } from '../../redux/authSlice';
 
 export default function Signup() {
     const [name, setName] = useState('');
@@ -19,12 +13,56 @@ export default function Signup() {
     const [role, setRole] = useState('citizen');
     const [mfaOptIn, setMfaOptIn] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({ name: '', email: '', password: '' });
     const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const validateForm = () => {
+        let isValid = true;
+        const errors = { name: '', email: '', password: '' };
+
+        // Name validation
+        if (!name.trim()) {
+            errors.name = 'Full name is required.';
+            isValid = false;
+        } else if (name.trim().length < 3) {
+            errors.name = 'Name must be at least 3 characters.';
+            isValid = false;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+            errors.email = 'Email address is required.';
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            errors.email = 'Please enter a valid email address.';
+            isValid = false;
+        }
+
+        // Password validation
+        if (!password) {
+            errors.password = 'Password is required.';
+            isValid = false;
+        } else if (password.length < 6) {
+            errors.password = 'Password must be at least 6 characters.';
+            isValid = false;
+        }
+
+        setFieldErrors(errors);
+        return isValid;
+    };
 
     const handleSignup = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -40,9 +78,7 @@ export default function Signup() {
             if (data.mfa_setup_required) {
                 navigate(`/mfa/setup?user_id=${data.user_id}`);
             } else if (data.token && data.user) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                window.dispatchEvent(new Event('auth-change'));
+                dispatch(loginSuccess({ token: data.token, user: data.user }));
                 navigate('/');
             }
         } catch (err) {
@@ -129,15 +165,22 @@ export default function Signup() {
                                     <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="text"
-                                        required
-                                        placeholder="e.g. John Doe"
+                                        placeholder="Enter your name"
                                         value={name}
-                                        onChange={(e) =>
-                                            setName(e.target.value)
-                                        }
-                                        className="w-full border border-black/10 bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                        onChange={(e) => {
+                                            setName(e.target.value);
+                                            if (fieldErrors.name) {
+                                                setFieldErrors(prev => ({ ...prev, name: '' }));
+                                            }
+                                        }}
+                                        className={`w-full border bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.name ? 'border-red-500' : 'border-black/10'}`}
                                     />
                                 </div>
+                                {fieldErrors.name && (
+                                    <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                        {fieldErrors.name}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -148,15 +191,22 @@ export default function Signup() {
                                     <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="email"
-                                        required
-                                        placeholder="email@example.com"
+                                        placeholder="Enter your email"
                                         value={email}
-                                        onChange={(e) =>
-                                            setEmail(e.target.value)
-                                        }
-                                        className="w-full border border-black/10 bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                        onChange={(e) => {
+                                            setEmail(e.target.value);
+                                            if (fieldErrors.email) {
+                                                setFieldErrors(prev => ({ ...prev, email: '' }));
+                                            }
+                                        }}
+                                        className={`w-full border bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.email ? 'border-red-500' : 'border-black/10'}`}
                                     />
                                 </div>
+                                {fieldErrors.email && (
+                                    <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                        {fieldErrors.email}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -166,9 +216,7 @@ export default function Signup() {
                                 <div className="relative">
                                     <select
                                         value={role}
-                                        onChange={(e) =>
-                                            setRole(e.target.value)
-                                        }
+                                        onChange={(e) => setRole(e.target.value)}
                                         className="w-full select-none border border-black/10 bg-white/40 px-4 py-4 font-['Montserrat'] text-sm font-bold text-black transition-colors focus:bg-white/60 focus:outline-none"
                                     >
                                         <option value="citizen">Citizen</option>
@@ -190,15 +238,22 @@ export default function Signup() {
                                     <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="password"
-                                        required
                                         placeholder="••••••••"
                                         value={password}
-                                        onChange={(e) =>
-                                            setPassword(e.target.value)
-                                        }
-                                        className="w-full border border-black/10 bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            if (fieldErrors.password) {
+                                                setFieldErrors(prev => ({ ...prev, password: '' }));
+                                            }
+                                        }}
+                                        className={`w-full border bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.password ? 'border-red-500' : 'border-black/10'}`}
                                     />
                                 </div>
+                                {fieldErrors.password && (
+                                    <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                        {fieldErrors.password}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="flex cursor-pointer items-center gap-4 border border-black/10 bg-white/40 p-4 transition-colors hover:bg-white/60">
@@ -206,9 +261,7 @@ export default function Signup() {
                                     id="mfa"
                                     type="checkbox"
                                     checked={mfaOptIn}
-                                    onChange={(e) =>
-                                        setMfaOptIn(e.target.checked)
-                                    }
+                                    onChange={(e) => setMfaOptIn(e.target.checked)}
                                     className="h-4 w-4 shrink-0 cursor-pointer accent-black"
                                 />
                                 <label
@@ -223,7 +276,7 @@ export default function Signup() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
                             >
                                 {loading ? 'SIGNING UP...' : 'SIGN UP'}
                             </button>

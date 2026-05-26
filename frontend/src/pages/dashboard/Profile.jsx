@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
     LogOut,
@@ -9,18 +10,17 @@ import {
     Terminal,
     Award,
     Zap,
-    AwardIcon,
     Compass,
     Sparkles,
     UserCheck,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
+import { logout } from '../../redux/authSlice';
 
 export default function Profile() {
     const navigate = useNavigate();
-    const userString = localStorage.getItem('user');
-    const user = userString ? JSON.parse(userString) : null;
-    const token = localStorage.getItem('token');
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
 
     const handleDisconnect = async () => {
         try {
@@ -28,9 +28,7 @@ export default function Profile() {
         } catch (e) {
             console.error('Logout failed', e);
         } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.dispatchEvent(new Event('auth-change'));
+            dispatch(logout());
             navigate('/login');
         }
     };
@@ -170,7 +168,7 @@ export default function Profile() {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-4 pt-4 font-['Montserrat'] text-xs font-bold uppercase sm:grid-cols-2">
-                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:scale-[1.03] hover:bg-white">
+                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
                                         <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
@@ -182,7 +180,7 @@ export default function Profile() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:scale-[1.03] hover:bg-white">
+                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
                                         <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
@@ -197,7 +195,7 @@ export default function Profile() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:scale-[1.03] hover:bg-white">
+                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
                                         <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
@@ -208,7 +206,7 @@ export default function Profile() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:scale-[1.03] hover:bg-white">
+                                    <div className="hover-glow-solar group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 transition-all duration-300 hover:bg-white">
                                         <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                         <div className="relative z-10">
                                             <span className="mb-1 block text-[10px] tracking-widest text-black/60">
@@ -245,12 +243,12 @@ export default function Profile() {
                                     return (
                                         <div
                                             key={idx}
-                                            className={`hover-grayscale-reveal flex cursor-pointer flex-col items-center justify-between p-5 text-center shadow-md transition-all duration-500 hover:scale-105 hover:shadow-xl ${glowClasses[idx]} group`}
+                                            className={`hover-grayscale-reveal flex cursor-pointer flex-col items-center justify-between p-5 text-center shadow-md transition-all duration-500 hover:scale-101 hover:shadow-md ${glowClasses[idx]} group`}
                                             style={{
                                                 backgroundColor: badge.color,
                                             }}
                                         >
-                                            <div className="mb-4 flex h-12 w-12 items-center justify-center bg-white/60 text-2xl shadow-sm transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
+                                            <div className="mb-4 flex h-12 w-12 items-center justify-center bg-white/60 text-2xl shadow-sm transition-transform duration-300">
                                                 {badge.emoji}
                                             </div>
                                             <div className="space-y-1">
@@ -283,7 +281,7 @@ export default function Profile() {
                             </h2>
 
                             <div className="space-y-4 font-['Montserrat'] text-xs">
-                                <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:scale-[1.02] hover:bg-white">
+                                <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:bg-white">
                                     <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                     <Terminal className="relative z-10 mt-0.5 h-5 w-5 shrink-0 text-black transition-transform duration-500" />
                                     <div className="relative z-10">
@@ -296,7 +294,7 @@ export default function Profile() {
                                     </div>
                                 </div>
 
-                                <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:scale-[1.02] hover:bg-white">
+                                <div className="hover-rotate-icon group relative flex cursor-pointer items-start gap-4 overflow-hidden border-l-4 border-black bg-white/40 py-4 pl-5 transition-all duration-300 hover:bg-white">
                                     <div className="absolute inset-0 z-0 -translate-x-full bg-[#dfed2b]/5 transition-transform duration-300 group-hover:translate-x-0" />
                                     <Terminal className="relative z-10 mt-0.5 h-5 w-5 shrink-0 text-black transition-transform duration-500" />
                                     <div className="relative z-10">

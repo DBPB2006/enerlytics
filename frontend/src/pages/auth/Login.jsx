@@ -1,23 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Lock, Mail, ShieldAlert, Zap, Compass, Wind, Sun } from 'lucide-react';
-import api from '../utils/api';
+import { Lock, Mail, ShieldAlert, Sun, Wind } from 'lucide-react';
+import api from '../../utils/api';
+import { loginStart, loginSuccess, loginFailure, clearError } from '../../redux/authSlice';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
 
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const urlError = searchParams.get('error');
 
+    const { loading, error: reduxError } = useSelector((state) => state.auth);
+
+    // Clear redux auth errors on mount
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
+
+    const validateForm = () => {
+        let isValid = true;
+        const errors = { email: '', password: '' };
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+            errors.email = 'Email address is required.';
+            isValid = false;
+        } else if (!emailRegex.test(email)) {
+            errors.email = 'Please enter a valid email address.';
+            isValid = false;
+        }
+
+        // Password validation
+        if (!password) {
+            errors.password = 'Password is required.';
+            isValid = false;
+        }
+
+        setFieldErrors(errors);
+        return isValid;
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
+        dispatch(clearError());
+
+        if (!validateForm()) {
+            return;
+        }
+
+        dispatch(loginStart());
 
         try {
             const response = await api.post('/login', { email, password });
@@ -28,27 +66,20 @@ export default function Login() {
             } else if (data.mfa_required) {
                 navigate(`/mfa/verify?user_id=${data.user_id}`);
             } else if (data.token && data.user) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                window.dispatchEvent(new Event('auth-change'));
+                dispatch(loginSuccess({ token: data.token, user: data.user }));
                 navigate('/');
             }
         } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                    'Authentication failed. Please verify credentials.',
-            );
-        } finally {
-            setLoading(false);
+            const errMsg = err.response?.data?.message || 'Authentication failed. Please verify credentials.';
+            dispatch(loginFailure(errMsg));
         }
     };
 
     const handleGoogleSSO = () => {
-        window.location.href =
-            'http://localhost:8000/api/auth/google/redirect?mode=login';
+        window.location.href = 'http://localhost:8000/api/auth/google/redirect?mode=login';
     };
 
-    const displayError = error || urlError;
+    const displayError = reduxError || urlError;
 
     return (
         <motion.div
@@ -120,15 +151,22 @@ export default function Login() {
                                     <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="email"
-                                        required
-                                        placeholder="email@example.com"
+                                        placeholder="Enter your email"
                                         value={email}
-                                        onChange={(e) =>
-                                            setEmail(e.target.value)
-                                        }
-                                        className="w-full border border-black/10 bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                        onChange={(e) => {
+                                            setEmail(e.target.value);
+                                            if (fieldErrors.email) {
+                                                setFieldErrors(prev => ({ ...prev, email: '' }));
+                                            }
+                                        }}
+                                        className={`w-full border bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.email ? 'border-red-500' : 'border-black/10'}`}
                                     />
                                 </div>
+                                {fieldErrors.email && (
+                                    <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                        {fieldErrors.email}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -139,21 +177,28 @@ export default function Login() {
                                     <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="password"
-                                        required
                                         placeholder="Enter your password"
                                         value={password}
-                                        onChange={(e) =>
-                                            setPassword(e.target.value)
-                                        }
-                                        className="w-full border border-black/10 bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none"
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            if (fieldErrors.password) {
+                                                setFieldErrors(prev => ({ ...prev, password: '' }));
+                                            }
+                                        }}
+                                        className={`w-full border bg-white/40 px-4 py-4 pl-12 font-['Montserrat'] text-sm font-bold text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.password ? 'border-red-500' : 'border-black/10'}`}
                                     />
                                 </div>
+                                {fieldErrors.password && (
+                                    <span className="block font-['Montserrat'] text-[9px] font-bold uppercase tracking-widest text-red-500">
+                                        {fieldErrors.password}
+                                    </span>
+                                )}
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black"
+                                className="flex w-full items-center justify-center gap-2 bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#dfed2b] hover:text-black disabled:opacity-50"
                             >
                                 {loading ? 'SIGNING IN...' : 'SIGN IN'}
                             </button>

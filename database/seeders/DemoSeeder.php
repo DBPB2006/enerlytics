@@ -26,9 +26,9 @@ class DemoSeeder extends Seeder
         );
 
         $rajesh = User::firstOrCreate(
-            ['email' => 'rajesh@example.com'],
+            ['email' => 'provider1@example.com'],
             [
-                'name' => 'Rajesh Kumar',
+                'name' => 'Energy Provider One',
                 'password' => bcrypt('password'),
                 'role' => 'energy_provider',
                 'unique_id' => 'EP-451298',
@@ -37,9 +37,9 @@ class DemoSeeder extends Seeder
         );
 
         $priya = User::firstOrCreate(
-            ['email' => 'priya@example.com'],
+            ['email' => 'leader1@example.com'],
             [
-                'name' => 'Priya Sharma',
+                'name' => 'Community Leader One',
                 'password' => bcrypt('password'),
                 'role' => 'community_leader',
                 'unique_id' => 'CL-883204',
@@ -48,9 +48,9 @@ class DemoSeeder extends Seeder
         );
 
         $amit = User::firstOrCreate(
-            ['email' => 'amit@example.com'],
+            ['email' => 'citizen1@example.com'],
             [
-                'name' => 'Amit Patel',
+                'name' => 'Citizen One',
                 'password' => bcrypt('password'),
                 'role' => 'citizen',
                 'is_validated' => true,

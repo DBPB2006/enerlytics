@@ -6,14 +6,13 @@ import {
     Activity,
     TrendingUp,
     BarChart3,
-    PieChart,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 import {
     OperationalOutput,
     FactorCorrelation,
     UtilizationTrend,
-} from '../components/AnalyticsCharts';
+} from '../../components/AnalyticsCharts';
 
 // Animation Variants
 const staggerContainer = {
@@ -112,14 +111,12 @@ export default function Analytics() {
                                 'Global energy metrics are currently offline.'
                             ).toUpperCase()}
                         </p>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <button
                             onClick={() => window.location.reload()}
                             className="w-full bg-black py-4 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-white shadow-lg transition-colors hover:bg-red-500 hover:text-white"
                         >
                             RECONNECT FEED
-                        </motion.button>
+                        </button>
                     </div>
                 </motion.div>
             </div>
@@ -190,7 +187,6 @@ export default function Analytics() {
                             <motion.div
                                 key={i}
                                 variants={fadeUp}
-                                whileHover={{ y: -5, scale: 1.02 }}
                                 className={`eco-nexus-glass-card group relative z-10 cursor-pointer overflow-hidden bg-white/40 p-6 shadow-xl transition-all duration-500 hover:bg-white md:p-8 ${glowClasses[i]}`}
                             >
                                 {/* Sliding vibrant overlay */}
@@ -279,10 +275,6 @@ export default function Analytics() {
 
                                         return (
                                             <motion.div
-                                                whileHover={{
-                                                    scale: 1.02,
-                                                    x: 5,
-                                                }}
                                                 key={key}
                                                 className={`group relative cursor-pointer overflow-hidden border border-black/10 bg-white/40 p-5 shadow-sm transition-all duration-300 hover:bg-white ${glowClass}`}
                                             >
@@ -385,17 +377,11 @@ export default function Analytics() {
 
                             <div className="space-y-12">
                                 {/* 1. Operational Output */}
-                                <motion.div
-                                    whileHover={{ scale: 1.01 }}
-                                    className="group"
-                                >
+                                <div className="group">
                                     <h3 className="mb-6 flex items-center gap-3 border-b border-black/10 pb-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black">
-                                        <motion.div
-                                            whileHover={{ rotate: 180 }}
-                                            transition={{ duration: 0.5 }}
-                                        >
+                                        <div>
                                             <Activity className="h-5 w-5" />
-                                        </motion.div>
+                                        </div>
                                         OPERATIONAL OUTPUT (MW)
                                     </h3>
                                     <div className="border border-black/10 bg-white/80 p-4 shadow-inner transition-shadow group-hover:shadow-md">
@@ -403,24 +389,15 @@ export default function Analytics() {
                                             data={charts.pulse}
                                         />
                                     </div>
-                                </motion.div>
+                                </div>
 
                                 {/* 2. Correlations & Utilization in Columns */}
                                 <div className="grid grid-cols-1 gap-8 border-t border-black/10 pt-8 md:grid-cols-2">
-                                    <motion.div
-                                        whileHover={{ scale: 1.02 }}
-                                        className="group"
-                                    >
+                                    <div className="group">
                                         <h3 className="mb-6 flex items-center gap-3 border-b border-black/10 pb-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black">
-                                            <motion.div
-                                                whileHover={{ y: -5 }}
-                                                transition={{
-                                                    type: 'spring',
-                                                    stiffness: 300,
-                                                }}
-                                            >
+                                            <div>
                                                 <TrendingUp className="h-5 w-5" />
-                                            </motion.div>
+                                            </div>
                                             SOLAR INTENSITY CORRELATION
                                         </h3>
                                         <div className="border border-black/10 bg-white/80 p-4 shadow-inner transition-shadow group-hover:shadow-md">
@@ -429,18 +406,13 @@ export default function Analytics() {
                                                 type="solar"
                                             />
                                         </div>
-                                    </motion.div>
+                                    </div>
 
-                                    <motion.div
-                                        whileHover={{ scale: 1.02 }}
-                                        className="group"
-                                    >
+                                    <div className="group">
                                         <h3 className="mb-6 flex items-center gap-3 border-b border-black/10 pb-3 font-['Montserrat'] text-xs font-black uppercase tracking-widest text-black">
-                                            <motion.div
-                                                whileHover={{ scale: 1.2 }}
-                                            >
+                                            <div>
                                                 <BarChart3 className="h-5 w-5" />
-                                            </motion.div>
+                                            </div>
                                             CAPACITY UTILIZATION (%)
                                         </h3>
                                         <div className="border border-black/10 bg-white/80 p-4 shadow-inner transition-shadow group-hover:shadow-md">
@@ -448,7 +420,7 @@ export default function Analytics() {
                                                 data={charts.trend}
                                             />
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

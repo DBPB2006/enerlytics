@@ -20,7 +20,7 @@ import {
     YAxis,
     Tooltip,
 } from 'recharts';
-import api from '../utils/api';
+import api from '../../utils/api';
 
 const CATEGORY_DETAILS = {
     solar: {
@@ -202,7 +202,6 @@ export default function CategoryOverview() {
                 { hour: '18:00', output: roundVal(totalOutput * 0.68) },
             ];
         } else {
-            // geothermal
             return [
                 { hour: '08:00', output: roundVal(totalOutput * 1.0) },
                 { hour: '10:00', output: roundVal(totalOutput * 1.0) },
@@ -224,7 +223,6 @@ export default function CategoryOverview() {
             variants={staggerContainer}
             className="relative z-10 mx-auto w-full max-w-7xl select-none overflow-hidden px-6 pb-20 md:px-12"
         >
-            {/* Background blobs based on active theme */}
             <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 0.2 }}
@@ -234,7 +232,6 @@ export default function CategoryOverview() {
             />
 
             <div className="relative z-10 pt-4">
-                {/* Back Link */}
                 <motion.div variants={fadeUp}>
                     <Link
                         to="/categories"
@@ -245,14 +242,11 @@ export default function CategoryOverview() {
                     </Link>
                 </motion.div>
 
-                {/* Dynamic Theme Banner */}
                 <div className="mb-8 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-                    {/* Magazine Hero */}
                     <motion.div
                         variants={scaleIn}
                         className="group relative flex min-h-[500px] flex-col justify-between overflow-hidden bg-black p-8 shadow-2xl md:p-12 lg:col-span-8"
                     >
-                        {/* Background cover image with grayscale to color reveal */}
                         <div className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden">
                             <img
                                 src={details.image}
@@ -316,7 +310,6 @@ export default function CategoryOverview() {
                             </Link>
                         </div>
 
-                        {/* Decorative background element inside card */}
                         <motion.div
                             initial={{ x: 100, opacity: 0 }}
                             animate={{ x: 0, opacity: 0.02 }}
@@ -327,12 +320,10 @@ export default function CategoryOverview() {
                         </motion.div>
                     </motion.div>
 
-                    {/* Quick Metrics Panel */}
                     <motion.div
                         variants={staggerContainer}
                         className="flex flex-col gap-4 lg:col-span-4"
                     >
-                        {/* Stat Card 1 */}
                         <motion.div
                             variants={fadeUp}
                             whileHover={{ x: -5, scale: 1.01 }}
@@ -342,14 +333,7 @@ export default function CategoryOverview() {
                                 <span className="border border-black/10 bg-white/60 px-2 py-1 font-['Montserrat'] text-[10px] font-bold uppercase tracking-widest text-black/60">
                                     Total Capacity
                                 </span>
-                                <motion.div
-                                    animate={{ scale: [1, 1.5, 1] }}
-                                    transition={{
-                                        repeat: Infinity,
-                                        duration: 2,
-                                    }}
-                                    className="h-2 w-2 rounded-full bg-black"
-                                />
+                                <div className="h-2 w-2 rounded-full bg-black" />
                             </div>
                             <div
                                 className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-black transition-colors group-hover:text-[#dfed2b]"
@@ -364,7 +348,6 @@ export default function CategoryOverview() {
                             </span>
                         </motion.div>
 
-                        {/* Stat Card 2 */}
                         <motion.div
                             variants={fadeUp}
                             whileHover={{ x: -5, scale: 1.01 }}
@@ -389,10 +372,9 @@ export default function CategoryOverview() {
                             </span>
                         </motion.div>
 
-                        {/* Stat Card 3 */}
                         <motion.div
                             variants={fadeUp}
-                            whileHover={{ x: -5, scale: 1.01 }}
+                            whileHover={{ scale: 1.02 }}
                             className="group relative flex flex-1 cursor-pointer flex-col justify-between overflow-hidden bg-black p-6 text-white shadow-2xl"
                         >
                             <div className="absolute inset-0 z-0 translate-x-full bg-[#dfed2b] transition-transform duration-500 ease-out group-hover:translate-x-0" />
@@ -416,7 +398,6 @@ export default function CategoryOverview() {
                     </motion.div>
                 </div>
 
-                {/* Magazine Spreads: Trends & Hotspots */}
                 <motion.div
                     variants={staggerContainer}
                     initial="hidden"
@@ -424,7 +405,6 @@ export default function CategoryOverview() {
                     viewport={{ once: true }}
                     className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12"
                 >
-                    {/* Generation Trend Recharts Panel */}
                     <motion.div
                         variants={scaleIn}
                         className="eco-nexus-glass-card p-8 shadow-xl lg:col-span-7"
@@ -552,7 +532,6 @@ export default function CategoryOverview() {
                         </div>
                     </motion.div>
 
-                    {/* Regional Hotspots & Projects list */}
                     <motion.div
                         variants={staggerContainer}
                         className="flex flex-col gap-4 lg:col-span-5"
@@ -601,7 +580,7 @@ export default function CategoryOverview() {
                         >
                             <div className="absolute inset-0 z-0 translate-y-full bg-[#dfed2b] transition-transform duration-300 ease-out group-hover:translate-y-0"></div>
                             <div className="relative z-10 flex items-center gap-4 transition-colors group-hover:text-black">
-                                <Globe className="group-hover:animate-spin-slow h-8 w-8 opacity-50 transition-opacity group-hover:opacity-100" />
+                                <Globe className="h-8 w-8 opacity-50 transition-opacity group-hover:opacity-100" />
                                 <div>
                                     <h4 className="font-['Montserrat'] text-xl font-black uppercase tracking-tight">
                                         Need a resource setup?

@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     ArrowLeft,
-    Cpu,
     AlertTriangle,
     MapPin,
     Check,
     X,
     LogOut,
-    ShieldAlert,
-    Sparkles,
     Activity,
     FileText,
+    Loader2,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 import confetti from 'canvas-confetti';
 
 export default function GroupDetails() {
@@ -34,7 +32,6 @@ export default function GroupDetails() {
             const groupRes = await api.get(`/groups/${id}`);
             setGroup(groupRes.data);
 
-            // Check if user belongs to the group but hasn't enabled MFA
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!user.mfa_enabled) {
                 alert(
@@ -128,7 +125,7 @@ export default function GroupDetails() {
         return (
             <div className="relative z-10 flex min-h-[calc(100vh-68px)] w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
-                    <Loader2Icon className="h-10 w-10 animate-spin text-black" />
+                    <Loader2 className="h-10 w-10 animate-spin text-black" />
                     <p className="animate-pulse font-['Montserrat'] text-xs font-bold uppercase tracking-widest text-black/60">
                         Retrieving group details...
                     </p>
@@ -250,13 +247,7 @@ export default function GroupDetails() {
                             ) : (
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     {resources.map((res, idx) => (
-                                        <motion.div
-                                            initial={{
-                                                opacity: 0,
-                                                scale: 0.95,
-                                            }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: idx * 0.05 }}
+                                        <div
                                             key={res.id}
                                             className="flex flex-col justify-between border border-black/10 bg-white/40 p-5 transition-colors hover:bg-white/60"
                                         >
@@ -305,7 +296,7 @@ export default function GroupDetails() {
                                                 DEEP DIVE DETAILS{' '}
                                                 <Activity className="h-4 w-4" />
                                             </Link>
-                                        </motion.div>
+                                        </div>
                                     ))}
                                 </div>
                             )}
@@ -354,12 +345,7 @@ export default function GroupDetails() {
                                 ) : (
                                     <div className="space-y-4">
                                         {requests.map((r, idx) => (
-                                            <motion.div
-                                                initial={{ opacity: 0, x: 20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{
-                                                    delay: idx * 0.05,
-                                                }}
+                                            <div
                                                 key={r.id}
                                                 className="space-y-4 border border-black/10 bg-white/60 p-5 font-['Montserrat'] text-xs font-bold"
                                             >
@@ -391,7 +377,7 @@ export default function GroupDetails() {
                                                         REJECT
                                                     </button>
                                                 </div>
-                                            </motion.div>
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -411,10 +397,7 @@ export default function GroupDetails() {
 
                             <div className="space-y-3">
                                 {members.map((m, idx) => (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
+                                    <div
                                         key={m.id}
                                         className="flex flex-col justify-between gap-4 border border-black/10 bg-white/40 p-4 font-['Montserrat'] text-xs font-bold sm:flex-row sm:items-center"
                                     >
@@ -455,7 +438,7 @@ export default function GroupDetails() {
                                                     )}
                                                 </div>
                                             )}
-                                    </motion.div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -467,24 +450,5 @@ export default function GroupDetails() {
                 </div>
             </div>
         </motion.div>
-    );
-}
-
-function Loader2Icon({ className }) {
-    return (
-        <svg
-            className={className}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
     );
 }

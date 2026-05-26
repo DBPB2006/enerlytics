@@ -11,6 +11,9 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
+    /**
+     * Redirect to Google OAuth provider (Unit II Redirects)
+     */
     public function redirectToGoogle(Request $request)
     {
         $mode = $request->query('mode', 'login');
@@ -27,6 +30,9 @@ class AuthController extends Controller
             ->redirect();
     }
 
+    /**
+     * Handle Google OAuth Callback (Unit II redirects & Unit IV session management)
+     */
     public function handleGoogleCallback(Request $request)
     {
         try {
@@ -69,6 +75,8 @@ class AuthController extends Controller
             }
 
             Auth::login($user);
+            
+            // Unit IV: Storing session data and regenerating session identifier
             $request->session()->regenerate();
 
             return redirect("http://localhost:5173/auth/callback?token=session_token");
@@ -80,6 +88,9 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * Register a new operator (Unit V validations with custom messages & Unit IV sessions)
+     */
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -87,6 +98,13 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'sometimes|string|in:citizen,energy_provider,community_leader',
+        ], [
+            'name.required' => 'The operator name is mandatory.',
+            'email.required' => 'A valid email address is required.',
+            'email.email' => 'Please provide a standard email format.',
+            'email.unique' => 'This email is already registered in the grid.',
+            'password.required' => 'A secure password is required.',
+            'password.min' => 'The password must contain at least 8 characters.',
         ]);
 
         $role = $validated['role'] ?? 'citizen';
@@ -119,6 +137,8 @@ class AuthController extends Controller
         }
 
         Auth::login($user);
+        
+        // Unit IV: Session management
         $request->session()->regenerate();
 
         return response()->json([
@@ -127,11 +147,18 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Log in credentials check (Unit V validation & Unit IV sessions)
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+        ], [
+            'email.required' => 'Email is required to verify identity.',
+            'email.email' => 'Please provide a valid email format.',
+            'password.required' => 'Password is required to decrypt token.',
         ]);
 
         if (! Auth::attempt($credentials)) {
@@ -163,6 +190,7 @@ class AuthController extends Controller
             ]);
         }
 
+        // Unit IV: Sessions management
         $request->session()->regenerate();
 
         return response()->json([
@@ -171,9 +199,14 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Terminate operator session (Unit IV sessions - deleting session data)
+     */
     public function logout(Request $request)
     {
         Auth::logout();
+        
+        // Unit IV: Invalidate and regenerate CSRF session tokens
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -182,10 +215,15 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Validate citizen registration (Unit V form validation checks)
+     */
     public function validateParticipation(Request $request)
     {
         $request->validate([
-            'unique_id' => 'required|string',
+            'unique_id' => ['required', 'string', new \App\Rules\ValidUniqueId],
+        ], [
+            'unique_id.required' => 'Please input a unique member validation ID.',
         ]);
 
         $user = User::where('unique_id', $request->unique_id)->first();
@@ -206,6 +244,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Check registration status
+     */
     public function checkStatus($unique_id)
     {
         $user = User::where('unique_id', $unique_id)->first();
@@ -222,3 +263,4 @@ class AuthController extends Controller
         ]);
     }
 }
+

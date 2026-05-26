@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,21 +6,16 @@ import {
     Compass,
     Loader2,
     X,
-    ShieldAlert,
     Search,
-    Filter,
     Sliders,
     ChevronRight,
-    Check,
-    Globe,
-    Activity,
-    MapPin,
     Sun,
     Wind,
     Droplet,
-    Leaf,
+    Flame,
+    Globe,
 } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
 
 import L from 'leaflet';
 import {
@@ -218,7 +213,7 @@ export default function Resources() {
                 .includes(searchQuery.toLowerCase());
         const matchesType = searchQuery
             ? true
-            : selectedTypes.includes(res.type.toLowerCase());
+            : selectedTypes.length === 0 || selectedTypes.includes(res.type.toLowerCase());
         const matchesStatus = selectedStatuses.includes(
             res.status.toLowerCase(),
         );
@@ -333,13 +328,13 @@ export default function Resources() {
                 </MapContainer>
 
                 {/* Crosshair guidelines on map hover */}
-                <motion.div
+                <div
                     className="pointer-events-none absolute bottom-0 top-0 z-[1000] border-l border-black/10"
-                    animate={{ left: mouseCoords.x }}
+                    style={{ left: `${mouseCoords.x}px` }}
                 />
-                <motion.div
+                <div
                     className="pointer-events-none absolute left-0 right-0 z-[1000] border-t border-black/10"
-                    animate={{ top: mouseCoords.y }}
+                    style={{ top: `${mouseCoords.y}px` }}
                 />
             </div>
 
@@ -361,7 +356,7 @@ export default function Resources() {
             <motion.button
                 initial={false}
                 animate={{ left: isSidebarOpen ? '400px' : '0px' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className={`absolute top-1/2 z-[4000] hidden -translate-y-1/2 cursor-pointer border border-black/10 bg-black p-3 text-[#dfed2b] shadow-2xl transition-colors hover:bg-[#dfed2b] hover:text-black md:flex ${!isSidebarOpen && 'ml-4'}`}
             >
@@ -382,7 +377,7 @@ export default function Resources() {
             <motion.div
                 initial={false}
                 animate={{ x: isSidebarOpen ? 0 : '-100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute bottom-0 left-0 top-0 z-[4000] flex w-full shrink-0 flex-col border-r border-black/10 bg-white/95 pt-32 shadow-[10px_0_30px_rgba(0,0,0,0.1)] backdrop-blur-2xl md:w-[400px]"
             >
                 <div className="border-b border-black/10 p-6">
@@ -442,7 +437,6 @@ export default function Resources() {
                                     Families
                                 </label>
                                 <div className="flex flex-wrap gap-2">
-                                    {/* ALL button */}
                                     <button
                                         onClick={() => {
                                             if (selectedTypes.length === 5) {
@@ -484,26 +478,24 @@ export default function Resources() {
                                             selectedTypes.includes(type);
                                         const colors = getTypeColor(type);
                                         return (
-                                            <motion.button
+                                            <button
                                                 key={type}
                                                 onClick={() =>
                                                     toggleTypeFilter(type)
                                                 }
-                                                whileHover={{ scale: 1.08 }}
-                                                whileTap={{ scale: 0.95 }}
                                                 className="cursor-pointer px-3 py-1 font-['Montserrat'] text-[10px] font-bold uppercase shadow-sm transition-all duration-200 hover:shadow-md"
                                                 style={{
                                                     backgroundColor: active
                                                         ? colors.primary
                                                         : 'rgba(255,255,255,0.4)',
-                                                    color: active
-                                                        ? colors.text
-                                                        : '#000',
-                                                    border: '1px solid rgba(0,0,0,0.1)',
-                                                }}
-                                            >
-                                                {type}
-                                            </motion.button>
+                                                     color: active
+                                                         ? colors.text
+                                                         : '#000',
+                                                     border: '1px solid rgba(0,0,0,0.1)',
+                                                 }}
+                                             >
+                                                 {type}
+                                             </button>
                                         );
                                     })}
                                 </div>
@@ -580,19 +572,12 @@ export default function Resources() {
                                         if (window.innerWidth < 768)
                                             setIsSidebarOpen(false);
                                     }}
-                                    whileHover={{ x: 6, scale: 1.01 }}
-                                    transition={{
-                                        type: 'spring',
-                                        stiffness: 350,
-                                        damping: 25,
-                                    }}
                                     className={`group relative cursor-pointer overflow-hidden border p-4 transition-all duration-300 ${glowClass} hover-slide-chevron ${
                                         active
                                             ? 'border-black bg-white shadow-lg'
                                             : 'border-black/10 bg-white/40 hover:bg-white'
                                     }`}
                                 >
-                                    {/* Sliding overlay with 12% opacity brand accent */}
                                     <div
                                         className="absolute inset-0 z-0 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0"
                                         style={{
@@ -635,9 +620,10 @@ export default function Resources() {
             <AnimatePresence>
                 {selectedResource && (
                     <motion.div
-                        initial={{ opacity: 0, x: 50 }}
+                        initial={{ opacity: 0, x: 12 }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 50 }}
+                        exit={{ opacity: 0, x: 12 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
                         className="pointer-events-auto absolute bottom-6 right-6 top-32 z-[4000] flex w-80 flex-col border border-black/20 bg-white/95 shadow-2xl backdrop-blur-2xl"
                     >
                         <div className="relative border-b border-black/10 p-6">

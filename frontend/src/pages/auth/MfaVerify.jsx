@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Lock, ShieldAlert, ShieldCheck } from 'lucide-react';
-import api from '../utils/api';
+import api from '../../utils/api';
+import { loginSuccess } from '../../redux/authSlice';
 
 export default function MfaVerify() {
     const [searchParams] = useSearchParams();
     const userId = searchParams.get('user_id');
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
@@ -24,12 +27,7 @@ export default function MfaVerify() {
                 otp: code,
             });
             if (response.data.token && response.data.user) {
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem(
-                    'user',
-                    JSON.stringify(response.data.user),
-                );
-                window.dispatchEvent(new Event('auth-change'));
+                dispatch(loginSuccess({ token: response.data.token, user: response.data.user }));
                 navigate('/');
             }
         } catch (err) {
