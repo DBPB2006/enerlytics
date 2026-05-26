@@ -1,2 +1,5 @@
 resources/js/components/ui/*
 resources/views/mail/*
+frontend/dist
+node_modules
+vendor

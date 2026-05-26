@@ -26,8 +26,24 @@ const paddingAroundControl = [
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
+    {
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'tailwind.config.js',
+            'vite.config.ts',
+            'resources/js/actions/**',
+            'resources/js/components/ui/*',
+            'resources/js/routes/**',
+            'resources/js/wayfinder/**',
+            'get_html.js',
+            'eslint.config.js',
+        ],
+    },
     js.configs.recommended,
-    reactHooks.configs.flat['recommended-latest'],
+    reactHooks.configs['recommended-latest'],
     ...typescript.configs.recommended,
     {
         ...react.configs.flat.recommended,
@@ -98,27 +114,18 @@ export default [
             '@stylistic': stylistic,
         },
         rules: {
-            '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/brace-style': [
+                'error',
+                '1tbs',
+                { allowSingleLine: false },
+            ],
             '@stylistic/padding-line-between-statements': [
                 'error',
                 ...paddingAroundControl,
             ],
         },
     },
-    {
-        ignores: [
-            'vendor',
-            'node_modules',
-            'public',
-            'bootstrap/ssr',
-            'tailwind.config.js',
-            'vite.config.ts',
-            'resources/js/actions/**',
-            'resources/js/components/ui/*',
-            'resources/js/routes/**',
-            'resources/js/wayfinder/**',
-        ],
-    },
+
     prettier, // Turn off all rules that might conflict with Prettier
     {
         plugins: {
@@ -126,7 +133,15 @@ export default [
         },
         rules: {
             curly: ['error', 'all'],
-            '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: false }],
+            '@stylistic/brace-style': [
+                'error',
+                '1tbs',
+                { allowSingleLine: false },
+            ],
+            'no-unused-vars': 'warn',
+            '@typescript-eslint/no-unused-vars': 'warn',
+            'no-useless-assignment': 'warn',
+            'no-empty': 'warn',
         },
     },
 ];

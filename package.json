@@ -1,1 +1,31 @@
-{}
+{
+    "name": "enerlytics",
+    "private": true,
+    "type": "module",
+    "workspaces": [
+        "frontend"
+    ],
+    "scripts": {
+        "dev": "npm run dev --workspace=frontend",
+        "build": "npm run build --workspace=frontend",
+        "lint": "eslint .",
+        "lint:check": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "types:check": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@stylistic/eslint-plugin": "^2.11.0",
+        "eslint": "^10.3.0",
+        "eslint-config-prettier": "^10.1.0",
+        "eslint-plugin-import": "^2.31.0",
+        "eslint-plugin-react": "^7.37.2",
+        "eslint-plugin-react-hooks": "^5.1.0",
+        "globals": "^17.6.0",
+        "prettier": "^3.4.2",
+        "prettier-plugin-tailwindcss": "^0.6.9",
+        "typescript": "^5.7.2",
+        "typescript-eslint": "^8.17.0"
+    }
+}
