@@ -48,14 +48,11 @@ class AuthController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (! $user) {
-                // Generate unique_id for energy providers or community leaders
-                $uniqueId = null;
-                if (in_array($role, ['energy_provider', 'community_leader'])) {
-                    $prefix = $role === 'energy_provider' ? 'EP' : 'CL';
-                    do {
-                        $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                    } while (User::where('unique_id', $uniqueId)->exists());
-                }
+                // Generate unique_id for all roles (EP, CL, or CZ)
+                $prefix = $role === 'energy_provider' ? 'EP' : ($role === 'community_leader' ? 'CL' : 'CZ');
+                do {
+                    $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                } while (User::where('unique_id', $uniqueId)->exists());
 
                 $user = User::create([
                     'name' => $googleUser->getName(),
@@ -85,9 +82,9 @@ class AuthController extends Controller
                 }
             }
 
-            // Self-heal missing unique Validation IDs for operators (e.g. existing accounts logging in via Google)
-            if (in_array($user->role, ['energy_provider', 'community_leader']) && empty($user->unique_id)) {
-                $prefix = $user->role === 'energy_provider' ? 'EP' : 'CL';
+            // Self-heal missing unique Validation IDs for all roles (e.g. existing accounts logging in via Google)
+            if (empty($user->unique_id)) {
+                $prefix = $user->role === 'energy_provider' ? 'EP' : ($user->role === 'community_leader' ? 'CL' : 'CZ');
                 do {
                     $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 } while (User::where('unique_id', $uniqueId)->exists());
@@ -142,14 +139,11 @@ class AuthController extends Controller
         $role = $validated['role'] ?? 'citizen';
         $mfaOptIn = filter_var($request->input('mfa_opt_in'), FILTER_VALIDATE_BOOLEAN);
 
-        // Generate unique_id for energy providers or community leaders
-        $uniqueId = null;
-        if (in_array($role, ['energy_provider', 'community_leader'])) {
-            $prefix = $role === 'energy_provider' ? 'EP' : 'CL';
-            do {
-                $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-            } while (User::where('unique_id', $uniqueId)->exists());
-        }
+        // Generate unique_id for all roles (EP, CL, or CZ)
+        $prefix = $role === 'energy_provider' ? 'EP' : ($role === 'community_leader' ? 'CL' : 'CZ');
+        do {
+            $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (User::where('unique_id', $uniqueId)->exists());
 
         $user = User::create([
             'name' => $validated['name'],
@@ -208,9 +202,9 @@ class AuthController extends Controller
             }
         }
 
-        // Self-heal missing unique Validation IDs for operators (e.g. existing accounts logging in via standard credentials)
-        if (in_array($user->role, ['energy_provider', 'community_leader']) && empty($user->unique_id)) {
-            $prefix = $user->role === 'energy_provider' ? 'EP' : 'CL';
+        // Self-heal missing unique Validation IDs for all roles (e.g. existing accounts logging in via standard credentials)
+        if (empty($user->unique_id)) {
+            $prefix = $user->role === 'energy_provider' ? 'EP' : ($user->role === 'community_leader' ? 'CL' : 'CZ');
             do {
                 $uniqueId = $prefix . '-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             } while (User::where('unique_id', $uniqueId)->exists());
