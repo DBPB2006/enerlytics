@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
 
     // Unified Energy Resource Management Endpoints
     Route::prefix('resources')->name('resources.')->group(function () {
+        Route::post('/calculate', [ResourceController::class, 'calculate'])->name('calculate');
+        Route::post('/validate', [ResourceController::class, 'validateResource'])->name('validate');
         Route::get('/categories/summary', [ResourceController::class, 'categorySummary'])->name('categories.summary');
         Route::get('/', [ResourceController::class, 'index'])->name('index');
         Route::post('/', [ResourceController::class, 'store'])->middleware('validated')->name('store');

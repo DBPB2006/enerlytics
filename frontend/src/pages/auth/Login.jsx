@@ -23,37 +23,10 @@ export default function Login() {
         dispatch(clearError());
     }, [dispatch]);
 
-    const validateForm = () => {
-        let isValid = true;
-        const errors = { email: '', password: '' };
-
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!email) {
-            errors.email = 'Email address is required.';
-            isValid = false;
-        } else if (!emailRegex.test(email)) {
-            errors.email = 'Please enter a valid email address.';
-            isValid = false;
-        }
-
-        // Password validation
-        if (!password) {
-            errors.password = 'Password is required.';
-            isValid = false;
-        }
-
-        setFieldErrors(errors);
-        return isValid;
-    };
-
     const handleLogin = async (e) => {
         e.preventDefault();
         dispatch(clearError());
-
-        if (!validateForm()) {
-            return;
-        }
+        setFieldErrors({ email: '', password: '' });
 
         dispatch(loginStart());
 
@@ -70,8 +43,17 @@ export default function Login() {
                 navigate('/');
             }
         } catch (err) {
-            const errMsg = err.response?.data?.message || 'Authentication failed. Please verify credentials.';
-            dispatch(loginFailure(errMsg));
+            if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setFieldErrors({
+                    email: errors.email ? errors.email[0] : '',
+                    password: errors.password ? errors.password[0] : '',
+                });
+                dispatch(loginFailure('Validation failed. Please verify fields.'));
+            } else {
+                const errMsg = err.response?.data?.message || 'Authentication failed. Please verify credentials.';
+                dispatch(loginFailure(errMsg));
+            }
         }
     };
 

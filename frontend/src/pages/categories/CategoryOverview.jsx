@@ -157,60 +157,7 @@ export default function CategoryOverview() {
         fetchLiveData();
     }, [type]);
 
-    const getDynamicTrendData = () => {
-        const totalOutput = liveSummary ? liveSummary.total_output : 0;
-        const lowerType = type?.toLowerCase();
-        const roundVal = (val) => Math.round(val * 10) / 10;
-
-        if (lowerType === 'solar') {
-            return [
-                { hour: '08:00', output: roundVal(totalOutput * 0.15) },
-                { hour: '10:00', output: roundVal(totalOutput * 0.55) },
-                { hour: '12:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '14:00', output: roundVal(totalOutput * 0.9) },
-                { hour: '16:00', output: roundVal(totalOutput * 0.45) },
-                { hour: '18:00', output: roundVal(totalOutput * 0.1) },
-            ];
-        } else if (lowerType === 'wind') {
-            return [
-                { hour: '08:00', output: roundVal(totalOutput * 0.65) },
-                { hour: '10:00', output: roundVal(totalOutput * 0.75) },
-                { hour: '12:00', output: roundVal(totalOutput * 0.92) },
-                { hour: '14:00', output: roundVal(totalOutput * 0.82) },
-                { hour: '16:00', output: roundVal(totalOutput * 0.88) },
-                { hour: '18:00', output: roundVal(totalOutput * 1.0) },
-            ];
-        } else if (lowerType === 'hydro') {
-            return [
-                { hour: '08:00', output: roundVal(totalOutput * 0.95) },
-                { hour: '10:00', output: roundVal(totalOutput * 0.96) },
-                { hour: '12:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '14:00', output: roundVal(totalOutput * 0.98) },
-                { hour: '16:00', output: roundVal(totalOutput * 0.95) },
-                { hour: '18:00', output: roundVal(totalOutput * 0.95) },
-            ];
-        } else if (lowerType === 'biomass') {
-            return [
-                { hour: '08:00', output: roundVal(totalOutput * 0.68) },
-                { hour: '10:00', output: roundVal(totalOutput * 0.85) },
-                { hour: '12:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '14:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '16:00', output: roundVal(totalOutput * 0.78) },
-                { hour: '18:00', output: roundVal(totalOutput * 0.68) },
-            ];
-        } else {
-            return [
-                { hour: '08:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '10:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '12:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '14:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '16:00', output: roundVal(totalOutput * 1.0) },
-                { hour: '18:00', output: roundVal(totalOutput * 1.0) },
-            ];
-        }
-    };
-
-    const trendData = getDynamicTrendData();
+    const trendData = liveSummary ? (liveSummary.trend || []) : [];
 
     return (
         <motion.div
@@ -384,7 +331,7 @@ export default function CategoryOverview() {
                                 </div>
                                 <div className="mt-4 font-['Montserrat'] text-5xl font-black tracking-tighter text-[#d4e157] transition-colors group-hover:text-black">
                                     {liveSummary
-                                        ? `${(liveSummary.total_output * 280).toLocaleString(undefined, { maximumFractionDigits: 0 })}T CO₂`
+                                        ? `${liveSummary.co2_displacement.toLocaleString()}T CO₂`
                                         : '0T CO₂'}
                                 </div>
                                 <span className="mt-2 font-['Inter'] text-[9px] font-bold uppercase text-white/50 transition-colors group-hover:text-black/50">

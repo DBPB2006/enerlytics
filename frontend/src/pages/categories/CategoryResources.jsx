@@ -122,14 +122,18 @@ export default function CategoryResources() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [activeTab, setActiveTab] = useState('nodes');
+    const [totalCapacity, setTotalCapacity] = useState(0);
 
     useEffect(() => {
         const fetchCategoryResources = async () => {
             try {
                 const response = await api.get(`/resources?type=${type}`);
                 setResources(response.data);
+                const capHeader = response.headers['x-total-capacity'];
+                setTotalCapacity(capHeader ? parseFloat(capHeader) : 0);
             } catch {
                 setResources([]);
+                setTotalCapacity(0);
             }
         };
         fetchCategoryResources();
@@ -253,10 +257,7 @@ guidance voids validation ID privileges.
         return matchesSearch && matchesStatus;
     });
 
-    const totalCapacity = resources.reduce(
-        (acc, r) => acc + (parseFloat(r.capacity) || 0),
-        0,
-    );
+    // Aggregated capacity computed by backend and read from headers
 
     return (
         <motion.div

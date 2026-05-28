@@ -85,42 +85,10 @@ export default function Groups() {
         }
     };
 
-    const validateModalForm = () => {
-        let isValid = true;
-        const errors = { name: '', location: '', description: '' };
-
-        if (!name.trim()) {
-            errors.name = 'Group name is required.';
-            isValid = false;
-        } else if (name.trim().length < 3) {
-            errors.name = 'Group name must be at least 3 characters.';
-            isValid = false;
-        }
-
-        if (!location.trim()) {
-            errors.location = 'Location/Region is required.';
-            isValid = false;
-        }
-
-        if (!description.trim()) {
-            errors.description = 'Description/Mission statement is required.';
-            isValid = false;
-        } else if (description.trim().length < 10) {
-            errors.description = 'Description must be at least 10 characters.';
-            isValid = false;
-        }
-
-        setModalFieldErrors(errors);
-        return isValid;
-    };
-
     const handleCreateGroup = async (e) => {
         e.preventDefault();
         setModalError('');
-
-        if (!validateModalForm()) {
-            return;
-        }
+        setModalFieldErrors({ name: '', location: '', description: '' });
 
         setModalLoading(true);
 
@@ -148,6 +116,13 @@ export default function Groups() {
                 setModalOpen(false);
                 alert(err.response.data.message);
                 navigate('/mfa/setup');
+            } else if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setModalFieldErrors({
+                    name: errors.name ? errors.name[0] : '',
+                    location: errors.location ? errors.location[0] : '',
+                    description: errors.description ? errors.description[0] : '',
+                });
             } else {
                 setModalError(
                     err.response?.data?.message ||

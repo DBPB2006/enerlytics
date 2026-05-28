@@ -51,6 +51,31 @@ class Resource extends Model
         'insight',
     ];
 
+    protected static function booted()
+    {
+        static::saving(function ($resource) {
+            if ($resource->type === 'solar') {
+                if ($resource->irradiance === null || $resource->irradiance <= 0 || $resource->isDirty(['latitude', 'longitude'])) {
+                    try {
+                        $solarService = new \App\Services\SolarService();
+                        $resource->irradiance = $solarService->getIrradiance($resource->latitude, $resource->longitude);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Solar Service Error on saving resource: ' . $e->getMessage());
+                    }
+                }
+            } elseif ($resource->type === 'wind') {
+                if ($resource->wind_speed === null || $resource->wind_speed <= 0 || $resource->isDirty(['latitude', 'longitude'])) {
+                    try {
+                        $weatherService = new \App\Services\WeatherService();
+                        $resource->wind_speed = $weatherService->getWindSpeed($resource->latitude, $resource->longitude);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Weather Service Error on saving resource: ' . $e->getMessage());
+                    }
+                }
+            }
+        });
+    }
+
     public function getUtilizationAttribute()
     {
         if (isset($this->attributes['utilization'])) {

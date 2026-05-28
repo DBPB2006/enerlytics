@@ -140,7 +140,10 @@ class ResourceController extends Controller
             $resource->attachEnergyData();
         }
 
-        return response()->json($resources);
+        $totalCapacity = $resources->sum('capacity');
+
+        return response()->json($resources)
+            ->header('X-Total-Capacity', round($totalCapacity, 2));
     }
 
     /**
@@ -295,6 +298,151 @@ class ResourceController extends Controller
         return response()->json(['message' => 'Resource deleted successfully']);
     }
 
+    /**
+     * Validate resource creation/edit data step-by-step on the backend
+     */
+    public function validateResource(Request $request)
+    {
+        $step = (int) $request->input('step', 1);
+
+        if ($step === 1) {
+            $request->validate([
+                'title' => 'required|string|min:3|max:255',
+                'type' => 'required|in:solar,wind,hydro,biomass,geothermal',
+                'capacity' => 'required|numeric|gt:0',
+                'region' => 'required|string|max:255',
+                'latitude' => ['required', new \App\Rules\ValidCoordinate('latitude')],
+                'longitude' => ['required', new \App\Rules\ValidCoordinate('longitude')],
+                'location_name' => 'required|string|max:255',
+            ], [
+                'title.required' => 'Resource title is required.',
+                'title.min' => 'Title must be at least 3 characters.',
+                'capacity.required' => 'Capacity rating must be a positive number greater than 0.',
+                'capacity.gt' => 'Capacity rating must be a positive number greater than 0.',
+                'region.required' => 'Region/Sub division is required.',
+                'location_name.required' => 'City/Location Area is required.',
+            ]);
+        } elseif ($step === 2) {
+            $type = $request->input('type');
+            $rules = [];
+            $messages = [];
+
+            if ($type === 'solar') {
+                $rules = [
+                    'panel_area' => 'required|numeric|gt:0',
+                    'efficiency' => 'required|numeric|min:0|max:1',
+                ];
+                $messages = [
+                    'panel_area.required' => 'Panel surface area is required.',
+                    'panel_area.gt' => 'Panel surface area must be greater than 0.',
+                    'efficiency.required' => 'Cell efficiency rating is required.',
+                    'efficiency.min' => 'Efficiency rating must be between 0.00 and 1.00 (e.g. 0.18).',
+                    'efficiency.max' => 'Efficiency rating must be between 0.00 and 1.00 (e.g. 0.18).',
+                ];
+            } elseif ($type === 'wind') {
+                $rules = [
+                    'rotor_area' => 'required|numeric|gt:0',
+                ];
+                $messages = [
+                    'rotor_area.required' => 'Rotor swept area is required.',
+                    'rotor_area.gt' => 'Rotor swept area must be greater than 0.',
+                ];
+            } elseif ($type === 'hydro') {
+                $rules = [
+                    'flow_rate' => 'required|numeric|gt:0',
+                    'head' => 'required|numeric|gt:0',
+                ];
+                $messages = [
+                    'flow_rate.required' => 'Gravity flow rate is required.',
+                    'flow_rate.gt' => 'Gravity flow rate must be greater than 0.',
+                    'head.required' => 'Hydraulic head height is required.',
+                    'head.gt' => 'Hydraulic head height must be greater than 0.',
+                ];
+            }
+
+            if (!empty($rules)) {
+                $request->validate($rules, $messages);
+            }
+        }
+
+        return response()->json(['valid' => true]);
+    }
+
+    /**
+     * Preview estimated energy output and metrics on the backend
+     */
+    public function calculate(Request $request)
+    {
+        $type = $request->input('type');
+        $capacity = (float) $request->input('capacity', 0);
+        $efficiency = $request->filled('efficiency') ? (float) $request->input('efficiency') : null;
+        $lat = $request->input('latitude');
+        $lon = $request->input('longitude');
+        
+        $calculator = new \App\Services\EnergyCalculator();
+        $output = 0;
+        $score = 'LOW';
+
+        if ($type === 'solar') {
+            $area = (float) $request->input('panel_area', 0);
+            $eff = $efficiency ?? 0.15;
+            
+            $irr = null;
+            if ($request->filled('irradiance')) {
+                $irr = (float) $request->input('irradiance');
+            } elseif ($lat !== null && $lon !== null) {
+                try {
+                    $irr = (new \App\Services\SolarService())->getIrradiance($lat, $lon);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Solar Service Preview calculation error: ' . $e->getMessage());
+                }
+            }
+            $irr = $irr ?? 150;
+
+            $calc = $calculator->calculateSolar($irr, $area, $eff);
+            $output = $calc['estimated_output'];
+            $output = min($output, $capacity);
+            $score = $irr > 200 ? 'HIGH' : ($irr > 100 ? 'MEDIUM' : 'LOW');
+        } elseif ($type === 'wind') {
+            $area = (float) $request->input('rotor_area', 0);
+            $eff = $efficiency ?? 0.4;
+            
+            $speed = null;
+            if ($request->filled('wind_speed')) {
+                $speed = (float) $request->input('wind_speed');
+            } elseif ($lat !== null && $lon !== null) {
+                try {
+                    $speed = (new \App\Services\WeatherService())->getWindSpeed($lat, $lon);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Weather Service Preview calculation error: ' . $e->getMessage());
+                }
+            }
+            $speed = $speed ?? 5.0;
+
+            $calc = $calculator->calculateWind($speed, $area, $eff);
+            $output = $calc['estimated_output'];
+            $output = min($output, $capacity);
+            $score = $speed > 10 ? 'HIGH' : ($speed > 5 ? 'MEDIUM' : 'LOW');
+        } elseif ($type === 'hydro') {
+            $flow = (float) $request->input('flow_rate', 0) ?: (float) $request->input('river_flow', 0);
+            $head = (float) $request->input('head', 0);
+            $eff = $efficiency ?? 0.8;
+            $calc = $calculator->calculateHydro($flow, $head, $eff);
+            $output = $calc['estimated_output'];
+            $output = min($output, $capacity);
+            $score = $flow > 15 ? 'HIGH' : ($flow > 5 ? 'MEDIUM' : 'LOW');
+        } else {
+            $output = $capacity * 0.35;
+            $score = 'HIGH';
+        }
+
+        return response()->json([
+            'estimated_output' => round($output, 2),
+            'efficiency_score' => $score,
+            'accuracy' => 'PREVIEW_ESTIMATE',
+        ]);
+    }
+
     // ==========================================
     // 3. Telemetry & Analytics Services (Public)
     // ==========================================
@@ -345,11 +493,11 @@ class ResourceController extends Controller
         })->get();
 
         $summary = [
-            'solar' => ['count' => 0, 'total_output' => 0, 'scores' => []],
-            'wind' => ['count' => 0, 'total_output' => 0, 'scores' => []],
-            'hydro' => ['count' => 0, 'total_output' => 0, 'scores' => []],
-            'biomass' => ['count' => 0, 'total_output' => 0, 'scores' => []],
-            'geothermal' => ['count' => 0, 'total_output' => 0, 'scores' => []],
+            'solar' => ['count' => 0, 'total_output' => 0, 'total_capacity' => 0, 'scores' => []],
+            'wind' => ['count' => 0, 'total_output' => 0, 'total_capacity' => 0, 'scores' => []],
+            'hydro' => ['count' => 0, 'total_output' => 0, 'total_capacity' => 0, 'scores' => []],
+            'biomass' => ['count' => 0, 'total_output' => 0, 'total_capacity' => 0, 'scores' => []],
+            'geothermal' => ['count' => 0, 'total_output' => 0, 'total_capacity' => 0, 'scores' => []],
         ];
 
         foreach ($resources as $resource) {
@@ -358,6 +506,7 @@ class ResourceController extends Controller
             if (isset($summary[$type])) {
                 $summary[$type]['count']++;
                 $summary[$type]['total_output'] += $resource->energy_insight['estimated_output'] ?? 0;
+                $summary[$type]['total_capacity'] += $resource->capacity ?? 0;
                 $summary[$type]['scores'][] = $resource->energy_insight['efficiency_score'];
             }
         }
@@ -365,6 +514,9 @@ class ResourceController extends Controller
         foreach ($summary as $type => &$data) {
             $data['avg_efficiency'] = $this->calculateAverageEfficiency($data['scores']);
             $data['total_output'] = round($data['total_output'], 2);
+            $data['total_capacity'] = round($data['total_capacity'], 1);
+            $data['co2_displacement'] = round($data['total_output'] * 280);
+            $data['trend'] = $this->calculateCategoryTrend($type, $data['total_output']);
             unset($data['scores']);
         }
 
@@ -441,5 +593,61 @@ class ResourceController extends Controller
         });
 
         return response()->json($formatted);
+    }
+
+    /**
+     * Compute simulated hourly output trend for a category
+     */
+    private function calculateCategoryTrend($type, $totalOutput)
+    {
+        $lowerType = strtolower($type);
+        $roundVal = function($val) { return round($val, 1); };
+
+        if ($lowerType === 'solar') {
+            return [
+                ['hour' => '08:00', 'output' => $roundVal($totalOutput * 0.15)],
+                ['hour' => '10:00', 'output' => $roundVal($totalOutput * 0.55)],
+                ['hour' => '12:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '14:00', 'output' => $roundVal($totalOutput * 0.9)],
+                ['hour' => '16:00', 'output' => $roundVal($totalOutput * 0.45)],
+                ['hour' => '18:00', 'output' => $roundVal($totalOutput * 0.1)],
+            ];
+        } elseif ($lowerType === 'wind') {
+            return [
+                ['hour' => '08:00', 'output' => $roundVal($totalOutput * 0.65)],
+                ['hour' => '10:00', 'output' => $roundVal($totalOutput * 0.75)],
+                ['hour' => '12:00', 'output' => $roundVal($totalOutput * 0.92)],
+                ['hour' => '14:00', 'output' => $roundVal($totalOutput * 0.82)],
+                ['hour' => '16:00', 'output' => $roundVal($totalOutput * 0.88)],
+                ['hour' => '18:00', 'output' => $roundVal($totalOutput * 1.0)],
+            ];
+        } elseif ($lowerType === 'hydro') {
+            return [
+                ['hour' => '08:00', 'output' => $roundVal($totalOutput * 0.95)],
+                ['hour' => '10:00', 'output' => $roundVal($totalOutput * 0.96)],
+                ['hour' => '12:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '14:00', 'output' => $roundVal($totalOutput * 0.98)],
+                ['hour' => '16:00', 'output' => $roundVal($totalOutput * 0.95)],
+                ['hour' => '18:00', 'output' => $roundVal($totalOutput * 0.95)],
+            ];
+        } elseif ($lowerType === 'biomass') {
+            return [
+                ['hour' => '08:00', 'output' => $roundVal($totalOutput * 0.68)],
+                ['hour' => '10:00', 'output' => $roundVal($totalOutput * 0.85)],
+                ['hour' => '12:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '14:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '16:00', 'output' => $roundVal($totalOutput * 0.78)],
+                ['hour' => '18:00', 'output' => $roundVal($totalOutput * 0.68)],
+            ];
+        } else {
+            return [
+                ['hour' => '08:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '10:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '12:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '14:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '16:00', 'output' => $roundVal($totalOutput * 1.0)],
+                ['hour' => '18:00', 'output' => $roundVal($totalOutput * 1.0)],
+            ];
+        }
     }
 }

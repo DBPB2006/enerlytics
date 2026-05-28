@@ -107,9 +107,6 @@ export default function CreateResource() {
     const [status, setStatus] = useState('active');
     const [groupId, setGroupId] = useState('');
 
-    const [irradiance, setIrradiance] = useState('');
-    const [windSpeed, setWindSpeed] = useState('');
-    const [riverFlow, setRiverFlow] = useState('');
 
     const [panelArea, setPanelArea] = useState('');
     const [cellEfficiency, setCellEfficiency] = useState('0.18');
@@ -127,6 +124,7 @@ export default function CreateResource() {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [preview, setPreview] = useState(null);
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -162,9 +160,6 @@ export default function CreateResource() {
                     setRegion(data.region || '');
                     setStatus(data.status || 'active');
                     setGroupId(data.group_id || '');
-                    setIrradiance(data.irradiance || '');
-                    setWindSpeed(data.wind_speed || '');
-                    setRiverFlow(data.river_flow || '');
                     setPanelArea(data.panel_area || '');
                     setCellEfficiency(
                         data.efficiency || data.cell_efficiency || '0.18',
@@ -189,44 +184,42 @@ export default function CreateResource() {
         }
     }, [id, isEditMode]);
 
-    const preview = (() => {
-        let output;
-        let score;
-        const cap = parseFloat(capacity) || 0;
-
-        if (type === 'solar') {
-            const area = parseFloat(panelArea) || 0;
-            const eff = parseFloat(cellEfficiency) || 0.15;
-            const irr = parseFloat(irradiance) || 150;
-            output = (area * eff * irr) / 1000000;
-            output = Math.min(output, cap);
-            score = irr > 200 ? 'HIGH' : irr > 100 ? 'MEDIUM' : 'LOW';
-        } else if (type === 'wind') {
-            const area = parseFloat(rotorSweptArea) || 0;
-            const speed = parseFloat(windSpeed) || 0;
-            output = (0.5 * 1.225 * area * Math.pow(speed, 3) * 0.4) / 1000000;
-            output = Math.min(output, cap);
-            score = speed > 10 ? 'HIGH' : speed > 5 ? 'MEDIUM' : 'LOW';
-        } else if (type === 'hydro') {
-            const flow = parseFloat(flowRate) || parseFloat(riverFlow) || 0;
-            const h = parseFloat(head) || 0;
-            output = (1000 * 9.81 * flow * h * 0.8) / 1000000;
-            output = Math.min(output, cap);
-            score = flow > 15 ? 'HIGH' : flow > 5 ? 'MEDIUM' : 'LOW';
-        } else {
-            output = cap * 0.35;
-            score = 'HIGH';
-        }
-
-        if (output > 0) {
-            return {
-                estimated_output: output,
-                efficiency_score: score,
-                accuracy: 'PREVIEW_ESTIMATE',
-            };
-        }
-        return null;
-    })();
+    useEffect(() => {
+        const fetchPreview = async () => {
+            const cap = parseFloat(capacity);
+            if (isNaN(cap) || cap <= 0) {
+                setPreview(null);
+                return;
+            }
+            try {
+                const res = await api.post('/resources/calculate', {
+                    type,
+                    capacity: cap,
+                    efficiency: parseFloat(cellEfficiency),
+                    panel_area: parseFloat(panelArea),
+                    rotor_area: parseFloat(rotorSweptArea),
+                    flow_rate: parseFloat(flowRate),
+                    head: parseFloat(head),
+                    latitude: parseFloat(latitude),
+                    longitude: parseFloat(longitude),
+                });
+                setPreview(res.data);
+            } catch {
+                setPreview(null);
+            }
+        };
+        fetchPreview();
+    }, [
+        type,
+        capacity,
+        cellEfficiency,
+        panelArea,
+        rotorSweptArea,
+        flowRate,
+        head,
+        latitude,
+        longitude,
+    ]);
 
     const handleAddTag = (e) => {
         e.preventDefault();
@@ -274,132 +267,77 @@ export default function CreateResource() {
         }
     };
 
-    const validateStep1 = () => {
-        const errors = {};
-        let isValid = true;
-
-        if (!title.trim()) {
-            errors.title = 'Resource title is required.';
-            isValid = false;
-        } else if (title.trim().length < 3) {
-            errors.title = 'Title must be at least 3 characters.';
-            isValid = false;
-        }
-
-        const cap = parseFloat(capacity);
-        if (isNaN(cap) || cap <= 0) {
-            errors.capacity = 'Capacity rating must be a positive number greater than 0.';
-            isValid = false;
-        }
-
-        if (!region.trim()) {
-            errors.region = 'Region/Sub division is required.';
-            isValid = false;
-        }
-
-        const lat = parseFloat(latitude);
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-            errors.latitude = 'Latitude must be a valid number between -90 and 90.';
-            isValid = false;
-        }
-
-        const lng = parseFloat(longitude);
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-            errors.longitude = 'Longitude must be a valid number between -180 and 180.';
-            isValid = false;
-        }
-
-        if (!locationName.trim()) {
-            errors.locationName = 'City/Location Area is required.';
-            isValid = false;
-        }
-
-        setFieldErrors(errors);
-        return isValid;
+    const mapValidationErrors = (errors) => {
+        const mapped = {};
+        const keyMap = {
+            location_name: 'locationName',
+            panel_area: 'panelArea',
+            rotor_area: 'rotorSweptArea',
+            wind_speed: 'windSpeed',
+            flow_rate: 'flowRate',
+            river_flow: 'riverFlow',
+            efficiency: 'cellEfficiency',
+            cell_efficiency: 'cellEfficiency',
+        };
+        Object.keys(errors).forEach((key) => {
+            const camelKey = keyMap[key] || key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+            mapped[camelKey] = errors[key][0];
+        });
+        return mapped;
     };
 
-    const validateStep2 = () => {
-        const errors = {};
-        let isValid = true;
-
-        if (type === 'solar') {
-            if (irradiance !== '') {
-                const irr = parseFloat(irradiance);
-                if (isNaN(irr) || irr <= 0) {
-                    errors.irradiance = 'Solar Irradiance must be greater than 0.';
-                    isValid = false;
-                }
-            }
-            if (panelArea !== '') {
-                const area = parseFloat(panelArea);
-                if (isNaN(area) || area <= 0) {
-                    errors.panelArea = 'Surface Area must be greater than 0.';
-                    isValid = false;
-                }
-            }
-            if (cellEfficiency !== '') {
-                const eff = parseFloat(cellEfficiency);
-                if (isNaN(eff) || eff < 0 || eff > 1) {
-                    errors.cellEfficiency = 'Efficiency rating must be between 0.00 and 1.00 (e.g. 0.18).';
-                    isValid = false;
-                }
-            }
-        } else if (type === 'wind') {
-            if (windSpeed !== '') {
-                const ws = parseFloat(windSpeed);
-                if (isNaN(ws) || ws <= 0) {
-                    errors.windSpeed = 'Wind speed must be greater than 0.';
-                    isValid = false;
-                }
-            }
-            if (rotorSweptArea !== '') {
-                const ra = parseFloat(rotorSweptArea);
-                if (isNaN(ra) || ra <= 0) {
-                    errors.rotorSweptArea = 'Rotor swept area must be greater than 0.';
-                    isValid = false;
-                }
-            }
-        } else if (type === 'hydro') {
-            if (flowRate !== '') {
-                const fr = parseFloat(flowRate);
-                if (isNaN(fr) || fr <= 0) {
-                    errors.flowRate = 'Gravity flow rate must be greater than 0.';
-                    isValid = false;
-                }
-            }
-            if (head !== '') {
-                const hd = parseFloat(head);
-                if (isNaN(hd) || hd <= 0) {
-                    errors.head = 'Hydraulic head height must be greater than 0.';
-                    isValid = false;
-                }
-            }
-        }
-
-        setFieldErrors(errors);
-        return isValid;
-    };
-
-    const handleContinueToStep2 = () => {
-        if (validateStep1()) {
+    const handleContinueToStep2 = async () => {
+        setFieldErrors({});
+        setError('');
+        try {
+            await api.post('/resources/validate', {
+                step: 1,
+                title,
+                type,
+                capacity: parseFloat(capacity),
+                region,
+                latitude: parseFloat(latitude),
+                longitude: parseFloat(longitude),
+                location_name: locationName,
+            });
             setStep(2);
+        } catch (err) {
+            if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setFieldErrors(mapValidationErrors(errors));
+            } else {
+                setError(err.response?.data?.message || 'Validation failed.');
+            }
         }
     };
-
-    const handleContinueToStep3 = () => {
-        if (validateStep2()) {
+    const handleContinueToStep3 = async () => {
+        setFieldErrors({});
+        setError('');
+        try {
+            await api.post('/resources/validate', {
+                step: 2,
+                type,
+                panel_area: panelArea !== '' ? parseFloat(panelArea) : null,
+                efficiency: cellEfficiency !== '' ? parseFloat(cellEfficiency) : null,
+                rotor_area: rotorSweptArea !== '' ? parseFloat(rotorSweptArea) : null,
+                flow_rate: flowRate !== '' ? parseFloat(flowRate) : null,
+                head: head !== '' ? parseFloat(head) : null,
+            });
             setStep(3);
+        } catch (err) {
+            if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setFieldErrors(mapValidationErrors(errors));
+            } else {
+                setError(err.response?.data?.message || 'Validation failed.');
+            }
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
-        if (!validateStep1() || !validateStep2()) {
-            return;
-        }
-
+        setFieldErrors({});
         setSubmitLoading(true);
 
         const payload = {
@@ -425,12 +363,6 @@ export default function CreateResource() {
             flow_rate:
                 type === 'hydro' && flowRate ? parseFloat(flowRate) : null,
             head: type === 'hydro' && head ? parseFloat(head) : null,
-            irradiance:
-                type === 'solar' && irradiance ? parseFloat(irradiance) : null,
-            wind_speed:
-                type === 'wind' && windSpeed ? parseFloat(windSpeed) : null,
-            river_flow:
-                type === 'hydro' && riverFlow ? parseFloat(riverFlow) : null,
             blueprint_name: uploadedFile ? uploadedFile.name : null,
         };
 
@@ -442,11 +374,17 @@ export default function CreateResource() {
             }
             navigate('/resources');
         } catch (err) {
-            const serverError =
-                err.response?.data?.message ||
-                err.response?.data?.error ||
-                'Failed to save resource. Please verify all fields are filled correctly.';
-            setError(serverError);
+            if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setFieldErrors(mapValidationErrors(errors));
+                setError('Failed to save resource. Please check validation errors.');
+            } else {
+                const serverError =
+                    err.response?.data?.message ||
+                    err.response?.data?.error ||
+                    'Failed to save resource. Please verify all fields are filled correctly.';
+                setError(serverError);
+            }
         } finally {
             setSubmitLoading(false);
         }
@@ -548,8 +486,8 @@ export default function CreateResource() {
                             type="button"
                             onClick={() => {
                                 if (s === 1) setStep(1);
-                                else if (s === 2 && validateStep1()) setStep(2);
-                                else if (s === 3 && validateStep1() && validateStep2()) setStep(3);
+                                else if (s === 2 && step >= 2) setStep(2);
+                                else if (s === 3 && step >= 3) setStep(3);
                             }}
                             className={`flex cursor-pointer items-center gap-3 text-[10px] font-bold uppercase tracking-widest ${
                                 step === s
@@ -803,67 +741,10 @@ export default function CreateResource() {
                                         <div className="border border-black/10 bg-white/40 p-6">
                                             <h4 className="mb-6 flex items-center gap-2 text-[10px] uppercase tracking-widest text-black">
                                                 <Sparkles className="h-4 w-4" />{' '}
-                                                // CLIMATE COEFFICIENT VALUES
+                                                // OPERATIONAL SETTINGS
                                             </h4>
 
                                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                                {type === 'solar' && (
-                                                    <div className="space-y-2">
-                                                        <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                            Solar Irradiance (W/m²)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="250"
-                                                            value={irradiance}
-                                                            onChange={(e) => {
-                                                                setIrradiance(e.target.value);
-                                                                clearErr('irradiance');
-                                                            }}
-                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.irradiance ? 'border-red-500' : 'border-black/10'}`}
-                                                        />
-                                                        {fieldErrors.irradiance && (
-                                                            <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.irradiance}</span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {type === 'wind' && (
-                                                    <div className="space-y-2">
-                                                        <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                            Wind Speed (m/s)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="6.5"
-                                                            value={windSpeed}
-                                                            onChange={(e) => {
-                                                                setWindSpeed(e.target.value);
-                                                                clearErr('windSpeed');
-                                                            }}
-                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.windSpeed ? 'border-red-500' : 'border-black/10'}`}
-                                                        />
-                                                        {fieldErrors.windSpeed && (
-                                                            <span className="block font-bold text-red-500 text-[9px] uppercase tracking-wider">{fieldErrors.windSpeed}</span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {type === 'hydro' && (
-                                                    <div className="space-y-2">
-                                                        <label className="block text-[10px] uppercase tracking-widest text-black/60">
-                                                            River Flow Volume (m³/s)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="12.0"
-                                                            value={riverFlow}
-                                                            onChange={(e) => {
-                                                                setRiverFlow(e.target.value);
-                                                                clearErr('flowRate');
-                                                            }}
-                                                            className={`w-full border bg-white/40 px-4 py-3 text-black transition-colors placeholder:text-black/30 focus:bg-white/60 focus:outline-none ${fieldErrors.flowRate ? 'border-red-500' : 'border-black/10'}`}
-                                                        />
-                                                    </div>
-                                                )}
                                                 <div className="space-y-2">
                                                     <label className="block text-[10px] uppercase tracking-widest text-black/60">
                                                         Operation Mode Status

@@ -75,12 +75,17 @@ class GroupController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'location' => 'nullable|string|max:255',
+            'name' => 'required|string|min:3|max:255',
+            'description' => 'required|string|min:10',
+            'location' => 'required|string|max:255',
         ], [
-            'name.required' => 'The group name is mandatory.',
-            'name.max' => 'The group name cannot exceed 255 characters.',
+            'name.required' => 'Group name is required.',
+            'name.min' => 'Group name must be at least 3 characters.',
+            'name.max' => 'Group name cannot exceed 255 characters.',
+            'location.required' => 'Location/Region is required.',
+            'location.max' => 'Location/Region cannot exceed 255 characters.',
+            'description.required' => 'Description/Mission statement is required.',
+            'description.min' => 'Description must be at least 10 characters.',
         ]);
 
         $group = Group::create([

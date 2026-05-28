@@ -19,57 +19,10 @@ export default function Signup() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const validateForm = () => {
-        let isValid = true;
-        const errors = { name: '', email: '', password: '' };
-
-        // Name validation
-        const nameRegex = /^[a-zA-Z\s]+$/;
-        if (!name.trim()) {
-            errors.name = 'Full name is required.';
-            isValid = false;
-        } else if (name.trim().length < 3) {
-            errors.name = 'Name must be at least 3 characters.';
-            isValid = false;
-        } else if (!nameRegex.test(name)) {
-            errors.name = 'Name must contain only letters and spaces.';
-            isValid = false;
-        }
-
-        // Email validation
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!email) {
-            errors.email = 'Email address is required.';
-            isValid = false;
-        } else if (!emailRegex.test(email)) {
-            errors.email = 'Please enter a valid email address.';
-            isValid = false;
-        }
-
-        // Password validation
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\-[\]{}|;:,.<>?~/]).+$/;
-        if (!password) {
-            errors.password = 'Password is required.';
-            isValid = false;
-        } else if (password.length < 8) {
-            errors.password = 'Password must be at least 8 characters.';
-            isValid = false;
-        } else if (!passwordRegex.test(password)) {
-            errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.';
-            isValid = false;
-        }
-
-        setFieldErrors(errors);
-        return isValid;
-    };
-
     const handleSignup = async (e) => {
         e.preventDefault();
         setError('');
-
-        if (!validateForm()) {
-            return;
-        }
+        setFieldErrors({ name: '', email: '', password: '' });
 
         setLoading(true);
 
@@ -90,10 +43,20 @@ export default function Signup() {
                 navigate('/');
             }
         } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                    'Registration failed. Please validate fields.',
-            );
+            if (err.response && err.response.status === 422) {
+                const errors = err.response.data.errors || {};
+                setFieldErrors({
+                    name: errors.name ? errors.name[0] : '',
+                    email: errors.email ? errors.email[0] : '',
+                    password: errors.password ? errors.password[0] : '',
+                });
+                setError('Registration failed. Please check validation errors.');
+            } else {
+                setError(
+                    err.response?.data?.message ||
+                        'Registration failed. Please validate fields.',
+                );
+            }
         } finally {
             setLoading(false);
         }
