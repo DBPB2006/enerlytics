@@ -215,13 +215,13 @@ export default function ResourceDetails() {
                                 <span className="mt-2 block text-xl font-black text-black">
                                     {resource.utilization !== undefined &&
                                     resource.utilization !== null
-                                        ? parseFloat(
-                                              resource.utilization,
-                                          ).toFixed(0)
+                                        ? parseFloat(resource.utilization) > 0 && parseFloat(resource.utilization) < 1
+                                            ? parseFloat(resource.utilization).toFixed(2)
+                                            : parseFloat(resource.utilization).toFixed(0)
                                         : resource.load_factor
-                                          ? (
-                                                resource.load_factor * 100
-                                            ).toFixed(0)
+                                          ? (resource.load_factor * 100) > 0 && (resource.load_factor * 100) < 1
+                                              ? (resource.load_factor * 100).toFixed(2)
+                                              : (resource.load_factor * 100).toFixed(0)
                                           : 0}
                                     %
                                 </span>

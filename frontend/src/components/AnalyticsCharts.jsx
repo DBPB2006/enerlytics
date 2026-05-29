@@ -105,7 +105,7 @@ const AnalyticsCharts = ({ resource, metrics = [] }) => {
                     </div>
                 </div>
                 <div className="relative z-10 h-64 w-full font-['Montserrat']">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={chartData}>
                             <CartesianGrid
                                 strokeDasharray="2 2"
@@ -179,7 +179,7 @@ const AnalyticsCharts = ({ resource, metrics = [] }) => {
                     Environment vs. Output
                 </p>
                 <div className="h-64 w-full font-['Montserrat']">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={chartData}>
                             <CartesianGrid
                                 strokeDasharray="2 2"
@@ -283,7 +283,7 @@ const AnalyticsCharts = ({ resource, metrics = [] }) => {
                     Efficiency Timeline
                 </p>
                 <div className="h-64 w-full font-['Montserrat']">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={chartData}>
                             <CartesianGrid
                                 strokeDasharray="2 2"
@@ -347,7 +347,7 @@ export const OperationalOutput = ({ data }) => {
 
     return (
         <div className="relative z-10 h-64 w-full font-['Montserrat']">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart data={data}>
                     <CartesianGrid
                         strokeDasharray="2 2"
@@ -413,7 +413,7 @@ export const FactorCorrelation = ({ data, type }) => {
 
     return (
         <div className="h-64 w-full font-['Montserrat']">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart data={data}>
                     <CartesianGrid
                         strokeDasharray="2 2"
@@ -502,7 +502,7 @@ export const UtilizationTrend = ({ data }) => {
 
     return (
         <div className="h-64 w-full font-['Montserrat']">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data}>
                     <CartesianGrid
                         strokeDasharray="2 2"

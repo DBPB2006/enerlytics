@@ -371,7 +371,7 @@ export default function CategoryOverview() {
                         </div>
 
                         <div className="mt-4 h-64 w-full font-['Montserrat']">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                 <AreaChart
                                     data={trendData}
                                     margin={{

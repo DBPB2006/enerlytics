@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { motion as motionFramer } from 'framer-motion';
 import {
     ArrowLeft,
@@ -84,6 +85,7 @@ function MapEventsHandler({ setLat, setLng, setLocName, setRegName, clearErr }) 
 
 export default function CreateResource() {
     const navigate = useNavigate();
+    const { user } = useSelector((state) => state.auth || {});
     const [searchParams] = useSearchParams();
 
     const queryLat = searchParams.get('lat');
@@ -551,6 +553,18 @@ export default function CreateResource() {
                                     <div className="flex items-center gap-3 bg-black p-4 font-['Montserrat'] text-[10px] font-bold uppercase text-[#d4e157]">
                                         <AlertCircle className="h-4 w-4 shrink-0" />
                                         <span>{error}</span>
+                                    </div>
+                                )}
+
+                                {user && !user.is_validated && (
+                                    <div className="flex flex-col gap-2 border border-black bg-[#ffebe1] p-5 font-['Montserrat'] text-xs text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        <div className="flex items-center gap-3 font-bold uppercase text-red-600">
+                                            <AlertCircle className="h-5 w-5 shrink-0" />
+                                            <span>Validation Required</span>
+                                        </div>
+                                        <p className="font-['Inter'] text-xs text-black/80">
+                                            Your operator account is currently unvalidated. You must validate your unique ID (<strong>{user.unique_id || 'N/A'}</strong>) in your <Link to="/profile" className="underline font-bold hover:text-black">Profile Page</Link> before you can register or edit energy nodes in the grid.
+                                        </p>
                                     </div>
                                 )}
 
@@ -1089,7 +1103,7 @@ export default function CreateResource() {
 
                                             <button
                                                 type="submit"
-                                                disabled={submitLoading}
+                                                disabled={submitLoading || (user && !user.is_validated)}
                                                 className="flex items-center justify-center gap-2 bg-black px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-[#d4e157] hover:text-black disabled:opacity-50"
                                             >
                                                 <Save className="h-4 w-4" />
@@ -1097,9 +1111,11 @@ export default function CreateResource() {
                                                     ? isEditMode
                                                         ? 'SAVING...'
                                                         : 'REGISTERING...'
-                                                    : isEditMode
-                                                      ? 'SAVE NODE CHANGES'
-                                                      : 'PUBLISH ENERGY NODE'}
+                                                    : user && !user.is_validated
+                                                      ? 'VALIDATION REQUIRED'
+                                                      : isEditMode
+                                                        ? 'SAVE NODE CHANGES'
+                                                        : 'PUBLISH ENERGY NODE'}
                                             </button>
                                         </div>
                                     </div>

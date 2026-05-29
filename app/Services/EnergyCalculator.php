@@ -13,7 +13,7 @@ class EnergyCalculator
         $outputMw = $outputKwh / 24 / 1000;
 
         return [
-            'estimated_output' => round($outputMw, 2),
+            'estimated_output' => round($outputMw, 5),
             'unit' => 'MW',
             'efficiency_score' => $this->getScoreFromOutput($outputMw),
         ];
@@ -29,7 +29,7 @@ class EnergyCalculator
         $outputMw = $outputW / 1000000;
 
         return [
-            'estimated_output' => round($outputMw, 2),
+            'estimated_output' => round($outputMw, 5),
             'unit' => 'MW',
             'efficiency_score' => $this->getScoreFromOutput($outputMw),
         ];
@@ -47,7 +47,7 @@ class EnergyCalculator
         $outputMw = $outputW / 1000000;
 
         return [
-            'estimated_output' => round($outputMw, 2),
+            'estimated_output' => round($outputMw, 5),
             'unit' => 'MW',
             'efficiency_score' => $this->getScoreFromOutput($outputMw),
         ];
@@ -63,7 +63,7 @@ class EnergyCalculator
         $outputMw = $capacity * $efficiency * $drynessFactor;
 
         return [
-            'estimated_output' => round($outputMw, 2),
+            'estimated_output' => round($outputMw, 5),
             'unit' => 'MW',
             'efficiency_score' => $this->getScoreFromOutput($outputMw),
         ];
@@ -79,7 +79,7 @@ class EnergyCalculator
         $outputMw = $capacity * $efficiency * $tempFactor;
 
         return [
-            'estimated_output' => round($outputMw, 2),
+            'estimated_output' => round($outputMw, 5),
             'unit' => 'MW',
             'efficiency_score' => $this->getScoreFromOutput($outputMw),
         ];

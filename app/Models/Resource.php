@@ -206,10 +206,11 @@ class Resource extends Model
             \Illuminate\Support\Facades\Log::error('Energy Calculation Error: '.$e->getMessage());
         }
 
+        $calculation['estimated_output'] = min($calculation['estimated_output'], $this->capacity);
         $this->energy_insight = $calculation;
 
         // Add utilization and insight for consistency with analytics
-        $this->utilization = $this->capacity > 0 ? round(($calculation['estimated_output'] / $this->capacity) * 100, 1) : 0;
+        $this->utilization = $this->capacity > 0 ? round(($calculation['estimated_output'] / $this->capacity) * 100, 4) : 0;
         $this->insight = $this->generateInsightString($this->type, $calculation['efficiency_score']);
 
         return $this;
